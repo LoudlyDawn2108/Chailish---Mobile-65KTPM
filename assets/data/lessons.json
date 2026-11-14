@@ -1,0 +1,1094 @@
+{
+ "version": 1,
+ "lessons": [
+  {
+   "id": "greetings",
+   "title": "Chào hỏi cơ bản",
+   "level": 1,
+   "topic": "Giao tiếp",
+   "focus": [],
+   "description": "Các câu chào hỏi thường gặp hằng ngày.",
+   "order": 0,
+   "items": [
+    {
+     "id": "greetings_1",
+     "text": "hello",
+     "meaning": "xin chào",
+     "type": "word",
+     "ipa": "/həˈloʊ/",
+     "phonemes": "HH AH0 L OW1"
+    },
+    {
+     "id": "greetings_2",
+     "text": "thank you",
+     "meaning": "cảm ơn bạn",
+     "type": "word",
+     "ipa": "/θæŋk juː/",
+     "phonemes": "TH AE1 NG K | Y UW1"
+    },
+    {
+     "id": "greetings_3",
+     "text": "good morning",
+     "meaning": "chào buổi sáng",
+     "type": "word",
+     "ipa": "/ɡʊd ˈmɔːrnɪŋ/",
+     "phonemes": "G UH1 D | M AO1 R N IH0 NG"
+    },
+    {
+     "id": "greetings_4",
+     "text": "how are you",
+     "meaning": "bạn khoẻ không",
+     "type": "sentence",
+     "ipa": "/haʊ ɑːr juː/",
+     "phonemes": "HH AW1 | AA1 R | Y UW1"
+    },
+    {
+     "id": "greetings_5",
+     "text": "nice to meet you",
+     "meaning": "rất vui được gặp bạn",
+     "type": "sentence",
+     "ipa": "/naɪs tuː miːt juː/",
+     "phonemes": "N AY1 S | T UW1 | M IY1 T | Y UW1"
+    },
+    {
+     "id": "greetings_6",
+     "text": "goodbye",
+     "meaning": "tạm biệt",
+     "type": "word",
+     "ipa": "/ɡʊdˈbaɪ/",
+     "phonemes": "G UH2 D B AY1"
+    },
+    {
+     "id": "greetings_7",
+     "text": "please",
+     "meaning": "làm ơn",
+     "type": "word",
+     "ipa": "/pliːz/",
+     "phonemes": "P L IY1 Z"
+    },
+    {
+     "id": "greetings_8",
+     "text": "sorry",
+     "meaning": "xin lỗi",
+     "type": "word",
+     "ipa": "/ˈsɑːriː/",
+     "phonemes": "S AA1 R IY0"
+    }
+   ]
+  },
+  {
+   "id": "numbers",
+   "title": "Số đếm",
+   "level": 1,
+   "topic": "Từ vựng",
+   "focus": [
+    "TH",
+    "R"
+   ],
+   "description": "Các số đếm, chú ý âm /θ/ trong three, thirteen, thirty.",
+   "order": 1,
+   "items": [
+    {
+     "id": "numbers_1",
+     "text": "one",
+     "meaning": "một",
+     "type": "word",
+     "ipa": "/wʌn/",
+     "phonemes": "W AH1 N"
+    },
+    {
+     "id": "numbers_2",
+     "text": "two",
+     "meaning": "hai",
+     "type": "word",
+     "ipa": "/tuː/",
+     "phonemes": "T UW1"
+    },
+    {
+     "id": "numbers_3",
+     "text": "three",
+     "meaning": "ba",
+     "type": "word",
+     "ipa": "/θriː/",
+     "phonemes": "TH R IY1"
+    },
+    {
+     "id": "numbers_4",
+     "text": "four",
+     "meaning": "bốn",
+     "type": "word",
+     "ipa": "/fɔːr/",
+     "phonemes": "F AO1 R"
+    },
+    {
+     "id": "numbers_5",
+     "text": "five",
+     "meaning": "năm",
+     "type": "word",
+     "ipa": "/faɪv/",
+     "phonemes": "F AY1 V"
+    },
+    {
+     "id": "numbers_6",
+     "text": "seven",
+     "meaning": "bảy",
+     "type": "word",
+     "ipa": "/ˈsevən/",
+     "phonemes": "S EH1 V AH0 N"
+    },
+    {
+     "id": "numbers_7",
+     "text": "eight",
+     "meaning": "tám",
+     "type": "word",
+     "ipa": "/eɪt/",
+     "phonemes": "EY1 T"
+    },
+    {
+     "id": "numbers_8",
+     "text": "thirteen",
+     "meaning": "mười ba",
+     "type": "word",
+     "ipa": "/ˈθɜːrtiːn/",
+     "phonemes": "TH ER1 T IY1 N"
+    },
+    {
+     "id": "numbers_9",
+     "text": "thirty",
+     "meaning": "ba mươi",
+     "type": "word",
+     "ipa": "/ˈθɜːrdiː/",
+     "phonemes": "TH ER1 D IY2"
+    },
+    {
+     "id": "numbers_10",
+     "text": "hundred",
+     "meaning": "một trăm",
+     "type": "word",
+     "ipa": "/ˈhʌndrəd/",
+     "phonemes": "HH AH1 N D R AH0 D"
+    }
+   ]
+  },
+  {
+   "id": "family",
+   "title": "Gia đình",
+   "level": 1,
+   "topic": "Từ vựng",
+   "focus": [
+    "DH",
+    "ER"
+   ],
+   "description": "Từ vựng về các thành viên trong gia đình.",
+   "order": 2,
+   "items": [
+    {
+     "id": "family_1",
+     "text": "mother",
+     "meaning": "mẹ",
+     "type": "word",
+     "ipa": "/ˈmʌðər/",
+     "phonemes": "M AH1 DH ER0"
+    },
+    {
+     "id": "family_2",
+     "text": "father",
+     "meaning": "bố",
+     "type": "word",
+     "ipa": "/ˈfɑːðər/",
+     "phonemes": "F AA1 DH ER0"
+    },
+    {
+     "id": "family_3",
+     "text": "brother",
+     "meaning": "anh/em trai",
+     "type": "word",
+     "ipa": "/ˈbrʌðər/",
+     "phonemes": "B R AH1 DH ER0"
+    },
+    {
+     "id": "family_4",
+     "text": "sister",
+     "meaning": "chị/em gái",
+     "type": "word",
+     "ipa": "/ˈsɪstər/",
+     "phonemes": "S IH1 S T ER0"
+    },
+    {
+     "id": "family_5",
+     "text": "family",
+     "meaning": "gia đình",
+     "type": "word",
+     "ipa": "/ˈfæməliː/",
+     "phonemes": "F AE1 M AH0 L IY0"
+    },
+    {
+     "id": "family_6",
+     "text": "children",
+     "meaning": "trẻ con",
+     "type": "word",
+     "ipa": "/ˈtʃɪldrən/",
+     "phonemes": "CH IH1 L D R AH0 N"
+    },
+    {
+     "id": "family_7",
+     "text": "daughter",
+     "meaning": "con gái",
+     "type": "word",
+     "ipa": "/ˈdɔːtər/",
+     "phonemes": "D AO1 T ER0"
+    },
+    {
+     "id": "family_8",
+     "text": "son",
+     "meaning": "con trai",
+     "type": "word",
+     "ipa": "/sʌn/",
+     "phonemes": "S AH1 N"
+    }
+   ]
+  },
+  {
+   "id": "objects",
+   "title": "Đồ vật quanh ta",
+   "level": 1,
+   "topic": "Từ vựng",
+   "focus": [],
+   "description": "Đồ vật quen thuộc trong nhà và lớp học.",
+   "order": 3,
+   "items": [
+    {
+     "id": "objects_1",
+     "text": "water",
+     "meaning": "nước",
+     "type": "word",
+     "ipa": "/ˈwɔːtər/",
+     "phonemes": "W AO1 T ER0"
+    },
+    {
+     "id": "objects_2",
+     "text": "table",
+     "meaning": "cái bàn",
+     "type": "word",
+     "ipa": "/ˈteɪbəl/",
+     "phonemes": "T EY1 B AH0 L"
+    },
+    {
+     "id": "objects_3",
+     "text": "phone",
+     "meaning": "điện thoại",
+     "type": "word",
+     "ipa": "/foʊn/",
+     "phonemes": "F OW1 N"
+    },
+    {
+     "id": "objects_4",
+     "text": "book",
+     "meaning": "quyển sách",
+     "type": "word",
+     "ipa": "/bʊk/",
+     "phonemes": "B UH1 K"
+    },
+    {
+     "id": "objects_5",
+     "text": "bag",
+     "meaning": "cái túi",
+     "type": "word",
+     "ipa": "/bæɡ/",
+     "phonemes": "B AE1 G"
+    },
+    {
+     "id": "objects_6",
+     "text": "chair",
+     "meaning": "cái ghế",
+     "type": "word",
+     "ipa": "/tʃer/",
+     "phonemes": "CH EH1 R"
+    },
+    {
+     "id": "objects_7",
+     "text": "window",
+     "meaning": "cửa sổ",
+     "type": "word",
+     "ipa": "/ˈwɪndoʊ/",
+     "phonemes": "W IH1 N D OW0"
+    },
+    {
+     "id": "objects_8",
+     "text": "kitchen",
+     "meaning": "nhà bếp",
+     "type": "word",
+     "ipa": "/ˈkɪtʃən/",
+     "phonemes": "K IH1 CH AH0 N"
+    }
+   ]
+  },
+  {
+   "id": "th_sounds",
+   "title": "Âm /θ/ và /ð/",
+   "level": 2,
+   "topic": "Âm khó",
+   "focus": [
+    "TH",
+    "DH"
+   ],
+   "description": "Đặt đầu lưỡi giữa hai hàm răng rồi thổi hơi. /θ/ không rung dây thanh, /ð/ có rung.",
+   "order": 4,
+   "items": [
+    {
+     "id": "th_sounds_1",
+     "text": "think",
+     "meaning": "nghĩ",
+     "type": "word",
+     "ipa": "/θɪŋk/",
+     "phonemes": "TH IH1 NG K"
+    },
+    {
+     "id": "th_sounds_2",
+     "text": "three",
+     "meaning": "ba",
+     "type": "word",
+     "ipa": "/θriː/",
+     "phonemes": "TH R IY1"
+    },
+    {
+     "id": "th_sounds_3",
+     "text": "thank",
+     "meaning": "cảm ơn",
+     "type": "word",
+     "ipa": "/θæŋk/",
+     "phonemes": "TH AE1 NG K"
+    },
+    {
+     "id": "th_sounds_4",
+     "text": "bath",
+     "meaning": "bồn tắm",
+     "type": "word",
+     "ipa": "/bæθ/",
+     "phonemes": "B AE1 TH"
+    },
+    {
+     "id": "th_sounds_5",
+     "text": "mouth",
+     "meaning": "miệng",
+     "type": "word",
+     "ipa": "/maʊθ/",
+     "phonemes": "M AW1 TH"
+    },
+    {
+     "id": "th_sounds_6",
+     "text": "this",
+     "meaning": "cái này",
+     "type": "word",
+     "ipa": "/ðɪs/",
+     "phonemes": "DH IH1 S"
+    },
+    {
+     "id": "th_sounds_7",
+     "text": "that",
+     "meaning": "cái kia",
+     "type": "word",
+     "ipa": "/ðæt/",
+     "phonemes": "DH AE1 T"
+    },
+    {
+     "id": "th_sounds_8",
+     "text": "they",
+     "meaning": "họ",
+     "type": "word",
+     "ipa": "/ðeɪ/",
+     "phonemes": "DH EY1"
+    },
+    {
+     "id": "th_sounds_9",
+     "text": "weather",
+     "meaning": "thời tiết",
+     "type": "word",
+     "ipa": "/ˈweðər/",
+     "phonemes": "W EH1 DH ER0"
+    },
+    {
+     "id": "th_sounds_10",
+     "text": "brother",
+     "meaning": "anh trai",
+     "type": "word",
+     "ipa": "/ˈbrʌðər/",
+     "phonemes": "B R AH1 DH ER0"
+    }
+   ]
+  },
+  {
+   "id": "r_l",
+   "title": "Phân biệt /r/ và /l/",
+   "level": 2,
+   "topic": "Âm khó",
+   "focus": [
+    "R",
+    "L"
+   ],
+   "description": "/r/: cong lưỡi về sau, không chạm vòm miệng. /l/: đầu lưỡi chạm lợi trên.",
+   "order": 5,
+   "items": [
+    {
+     "id": "r_l_1",
+     "text": "right",
+     "meaning": "đúng / bên phải",
+     "type": "word",
+     "ipa": "/raɪt/",
+     "phonemes": "R AY1 T"
+    },
+    {
+     "id": "r_l_2",
+     "text": "light",
+     "meaning": "ánh sáng",
+     "type": "word",
+     "ipa": "/laɪt/",
+     "phonemes": "L AY1 T"
+    },
+    {
+     "id": "r_l_3",
+     "text": "rice",
+     "meaning": "cơm",
+     "type": "word",
+     "ipa": "/raɪs/",
+     "phonemes": "R AY1 S"
+    },
+    {
+     "id": "r_l_4",
+     "text": "lice",
+     "meaning": "chấy",
+     "type": "word",
+     "ipa": "/laɪs/",
+     "phonemes": "L AY1 S"
+    },
+    {
+     "id": "r_l_5",
+     "text": "red",
+     "meaning": "màu đỏ",
+     "type": "word",
+     "ipa": "/red/",
+     "phonemes": "R EH1 D"
+    },
+    {
+     "id": "r_l_6",
+     "text": "led",
+     "meaning": "đã dẫn dắt",
+     "type": "word",
+     "ipa": "/led/",
+     "phonemes": "L EH1 D"
+    },
+    {
+     "id": "r_l_7",
+     "text": "fry",
+     "meaning": "chiên",
+     "type": "word",
+     "ipa": "/fraɪ/",
+     "phonemes": "F R AY1"
+    },
+    {
+     "id": "r_l_8",
+     "text": "fly",
+     "meaning": "bay",
+     "type": "word",
+     "ipa": "/flaɪ/",
+     "phonemes": "F L AY1"
+    },
+    {
+     "id": "r_l_9",
+     "text": "road",
+     "meaning": "con đường",
+     "type": "word",
+     "ipa": "/roʊd/",
+     "phonemes": "R OW1 D"
+    },
+    {
+     "id": "r_l_10",
+     "text": "load",
+     "meaning": "chất hàng",
+     "type": "word",
+     "ipa": "/loʊd/",
+     "phonemes": "L OW1 D"
+    },
+    {
+     "id": "r_l_11",
+     "text": "grass",
+     "meaning": "cỏ",
+     "type": "word",
+     "ipa": "/ɡræs/",
+     "phonemes": "G R AE1 S"
+    },
+    {
+     "id": "r_l_12",
+     "text": "glass",
+     "meaning": "cái cốc",
+     "type": "word",
+     "ipa": "/ɡlæs/",
+     "phonemes": "G L AE1 S"
+    }
+   ]
+  },
+  {
+   "id": "long_short_i",
+   "title": "Nguyên âm /iː/ và /ɪ/",
+   "level": 2,
+   "topic": "Âm khó",
+   "focus": [
+    "IY",
+    "IH"
+   ],
+   "description": "/iː/ kéo dài, môi bành sang hai bên. /ɪ/ ngắn, thả lỏng.",
+   "order": 6,
+   "items": [
+    {
+     "id": "long_short_i_1",
+     "text": "sheep",
+     "meaning": "con cừu",
+     "type": "word",
+     "ipa": "/ʃiːp/",
+     "phonemes": "SH IY1 P"
+    },
+    {
+     "id": "long_short_i_2",
+     "text": "ship",
+     "meaning": "con tàu",
+     "type": "word",
+     "ipa": "/ʃɪp/",
+     "phonemes": "SH IH1 P"
+    },
+    {
+     "id": "long_short_i_3",
+     "text": "leave",
+     "meaning": "rời đi",
+     "type": "word",
+     "ipa": "/liːv/",
+     "phonemes": "L IY1 V"
+    },
+    {
+     "id": "long_short_i_4",
+     "text": "live",
+     "meaning": "sống",
+     "type": "word",
+     "ipa": "/laɪv/",
+     "phonemes": "L AY1 V"
+    },
+    {
+     "id": "long_short_i_5",
+     "text": "seat",
+     "meaning": "chỗ ngồi",
+     "type": "word",
+     "ipa": "/siːt/",
+     "phonemes": "S IY1 T"
+    },
+    {
+     "id": "long_short_i_6",
+     "text": "sit",
+     "meaning": "ngồi",
+     "type": "word",
+     "ipa": "/sɪt/",
+     "phonemes": "S IH1 T"
+    },
+    {
+     "id": "long_short_i_7",
+     "text": "feel",
+     "meaning": "cảm thấy",
+     "type": "word",
+     "ipa": "/fiːl/",
+     "phonemes": "F IY1 L"
+    },
+    {
+     "id": "long_short_i_8",
+     "text": "fill",
+     "meaning": "làm đầy",
+     "type": "word",
+     "ipa": "/fɪl/",
+     "phonemes": "F IH1 L"
+    },
+    {
+     "id": "long_short_i_9",
+     "text": "beat",
+     "meaning": "đánh",
+     "type": "word",
+     "ipa": "/biːt/",
+     "phonemes": "B IY1 T"
+    },
+    {
+     "id": "long_short_i_10",
+     "text": "bit",
+     "meaning": "một chút",
+     "type": "word",
+     "ipa": "/bɪt/",
+     "phonemes": "B IH1 T"
+    }
+   ]
+  },
+  {
+   "id": "s_sh_z",
+   "title": "Âm /s/, /ʃ/ và /z/",
+   "level": 2,
+   "topic": "Âm khó",
+   "focus": [
+    "S",
+    "SH",
+    "Z"
+   ],
+   "description": "/ʃ/ chu môi về phía trước. /z/ giống /s/ nhưng rung dây thanh.",
+   "order": 7,
+   "items": [
+    {
+     "id": "s_sh_z_1",
+     "text": "see",
+     "meaning": "nhìn",
+     "type": "word",
+     "ipa": "/siː/",
+     "phonemes": "S IY1"
+    },
+    {
+     "id": "s_sh_z_2",
+     "text": "she",
+     "meaning": "cô ấy",
+     "type": "word",
+     "ipa": "/ʃiː/",
+     "phonemes": "SH IY1"
+    },
+    {
+     "id": "s_sh_z_3",
+     "text": "sip",
+     "meaning": "nhấp môi",
+     "type": "word",
+     "ipa": "/sɪp/",
+     "phonemes": "S IH1 P"
+    },
+    {
+     "id": "s_sh_z_4",
+     "text": "ship",
+     "meaning": "con tàu",
+     "type": "word",
+     "ipa": "/ʃɪp/",
+     "phonemes": "SH IH1 P"
+    },
+    {
+     "id": "s_sh_z_5",
+     "text": "sell",
+     "meaning": "bán",
+     "type": "word",
+     "ipa": "/sel/",
+     "phonemes": "S EH1 L"
+    },
+    {
+     "id": "s_sh_z_6",
+     "text": "shell",
+     "meaning": "vỏ sò",
+     "type": "word",
+     "ipa": "/ʃel/",
+     "phonemes": "SH EH1 L"
+    },
+    {
+     "id": "s_sh_z_7",
+     "text": "zoo",
+     "meaning": "sở thú",
+     "type": "word",
+     "ipa": "/zuː/",
+     "phonemes": "Z UW1"
+    },
+    {
+     "id": "s_sh_z_8",
+     "text": "zero",
+     "meaning": "số không",
+     "type": "word",
+     "ipa": "/ˈzɪroʊ/",
+     "phonemes": "Z IH1 R OW0"
+    },
+    {
+     "id": "s_sh_z_9",
+     "text": "busy",
+     "meaning": "bận rộn",
+     "type": "word",
+     "ipa": "/ˈbɪziː/",
+     "phonemes": "B IH1 Z IY0"
+    },
+    {
+     "id": "s_sh_z_10",
+     "text": "lazy",
+     "meaning": "lười biếng",
+     "type": "word",
+     "ipa": "/ˈleɪziː/",
+     "phonemes": "L EY1 Z IY0"
+    }
+   ]
+  },
+  {
+   "id": "final_consonants",
+   "title": "Âm cuối",
+   "level": 2,
+   "topic": "Âm khó",
+   "focus": [
+    "T",
+    "D",
+    "K",
+    "S",
+    "V"
+   ],
+   "description": "Người Việt hay nuốt âm cuối. Hãy bật rõ âm cuối của mỗi từ.",
+   "order": 8,
+   "items": [
+    {
+     "id": "final_consonants_1",
+     "text": "cat",
+     "meaning": "con mèo",
+     "type": "word",
+     "ipa": "/kæt/",
+     "phonemes": "K AE1 T"
+    },
+    {
+     "id": "final_consonants_2",
+     "text": "bad",
+     "meaning": "tệ",
+     "type": "word",
+     "ipa": "/bæd/",
+     "phonemes": "B AE1 D"
+    },
+    {
+     "id": "final_consonants_3",
+     "text": "book",
+     "meaning": "quyển sách",
+     "type": "word",
+     "ipa": "/bʊk/",
+     "phonemes": "B UH1 K"
+    },
+    {
+     "id": "final_consonants_4",
+     "text": "dog",
+     "meaning": "con chó",
+     "type": "word",
+     "ipa": "/dɔːɡ/",
+     "phonemes": "D AO1 G"
+    },
+    {
+     "id": "final_consonants_5",
+     "text": "five",
+     "meaning": "năm",
+     "type": "word",
+     "ipa": "/faɪv/",
+     "phonemes": "F AY1 V"
+    },
+    {
+     "id": "final_consonants_6",
+     "text": "nice",
+     "meaning": "đẹp",
+     "type": "word",
+     "ipa": "/naɪs/",
+     "phonemes": "N AY1 S"
+    },
+    {
+     "id": "final_consonants_7",
+     "text": "hand",
+     "meaning": "bàn tay",
+     "type": "word",
+     "ipa": "/hænd/",
+     "phonemes": "HH AE1 N D"
+    },
+    {
+     "id": "final_consonants_8",
+     "text": "desk",
+     "meaning": "bàn học",
+     "type": "word",
+     "ipa": "/desk/",
+     "phonemes": "D EH1 S K"
+    },
+    {
+     "id": "final_consonants_9",
+     "text": "fast",
+     "meaning": "nhanh",
+     "type": "word",
+     "ipa": "/fæst/",
+     "phonemes": "F AE1 S T"
+    },
+    {
+     "id": "final_consonants_10",
+     "text": "world",
+     "meaning": "thế giới",
+     "type": "word",
+     "ipa": "/wɜːrld/",
+     "phonemes": "W ER1 L D"
+    }
+   ]
+  },
+  {
+   "id": "ae_e",
+   "title": "Nguyên âm /æ/ và /e/",
+   "level": 2,
+   "topic": "Âm khó",
+   "focus": [
+    "AE",
+    "EH"
+   ],
+   "description": "/æ/ mở miệng rộng, hạ hàm dưới. /e/ mở miệng vừa phải.",
+   "order": 9,
+   "items": [
+    {
+     "id": "ae_e_1",
+     "text": "bad",
+     "meaning": "tệ",
+     "type": "word",
+     "ipa": "/bæd/",
+     "phonemes": "B AE1 D"
+    },
+    {
+     "id": "ae_e_2",
+     "text": "bed",
+     "meaning": "giường",
+     "type": "word",
+     "ipa": "/bed/",
+     "phonemes": "B EH1 D"
+    },
+    {
+     "id": "ae_e_3",
+     "text": "man",
+     "meaning": "người đàn ông",
+     "type": "word",
+     "ipa": "/mæn/",
+     "phonemes": "M AE1 N"
+    },
+    {
+     "id": "ae_e_4",
+     "text": "men",
+     "meaning": "những người đàn ông",
+     "type": "word",
+     "ipa": "/men/",
+     "phonemes": "M EH1 N"
+    },
+    {
+     "id": "ae_e_5",
+     "text": "sad",
+     "meaning": "buồn",
+     "type": "word",
+     "ipa": "/sæd/",
+     "phonemes": "S AE1 D"
+    },
+    {
+     "id": "ae_e_6",
+     "text": "said",
+     "meaning": "đã nói",
+     "type": "word",
+     "ipa": "/sed/",
+     "phonemes": "S EH1 D"
+    },
+    {
+     "id": "ae_e_7",
+     "text": "pan",
+     "meaning": "cái chảo",
+     "type": "word",
+     "ipa": "/pæn/",
+     "phonemes": "P AE1 N"
+    },
+    {
+     "id": "ae_e_8",
+     "text": "pen",
+     "meaning": "cây bút",
+     "type": "word",
+     "ipa": "/pen/",
+     "phonemes": "P EH1 N"
+    },
+    {
+     "id": "ae_e_9",
+     "text": "apple",
+     "meaning": "quả táo",
+     "type": "word",
+     "ipa": "/ˈæpəl/",
+     "phonemes": "AE1 P AH0 L"
+    },
+    {
+     "id": "ae_e_10",
+     "text": "happy",
+     "meaning": "vui vẻ",
+     "type": "word",
+     "ipa": "/ˈhæpiː/",
+     "phonemes": "HH AE1 P IY0"
+    }
+   ]
+  },
+  {
+   "id": "daily_sentences",
+   "title": "Câu giao tiếp hằng ngày",
+   "level": 3,
+   "topic": "Câu",
+   "focus": [],
+   "description": "Luyện đọc trôi chảy cả câu, chú ý nối âm và ngữ điệu.",
+   "order": 10,
+   "items": [
+    {
+     "id": "daily_sentences_1",
+     "text": "Could you help me please",
+     "meaning": "Bạn giúp tôi được không",
+     "type": "sentence",
+     "ipa": "/kʊd juː help miː pliːz/",
+     "phonemes": "K UH1 D | Y UW1 | HH EH1 L P | M IY1 | P L IY1 Z"
+    },
+    {
+     "id": "daily_sentences_2",
+     "text": "I would like a cup of coffee",
+     "meaning": "Tôi muốn một tách cà phê",
+     "type": "sentence",
+     "ipa": "/aɪ wʊd laɪk ə kʌp ʌv ˈkɑːfiː/",
+     "phonemes": "AY1 | W UH1 D | L AY1 K | AH0 | K AH1 P | AH1 V | K AA1 F IY0"
+    },
+    {
+     "id": "daily_sentences_3",
+     "text": "What time is it now",
+     "meaning": "Bây giờ là mấy giờ",
+     "type": "sentence",
+     "ipa": "/wʌt taɪm ɪz ɪt naʊ/",
+     "phonemes": "W AH1 T | T AY1 M | IH1 Z | IH1 T | N AW1"
+    },
+    {
+     "id": "daily_sentences_4",
+     "text": "Where is the nearest station",
+     "meaning": "Nhà ga gần nhất ở đâu",
+     "type": "sentence",
+     "ipa": "/wer ɪz ðə ˈnɪrəst ˈsteɪʃən/",
+     "phonemes": "W EH1 R | IH1 Z | DH AH0 | N IH1 R AH0 S T | S T EY1 SH AH0 N"
+    },
+    {
+     "id": "daily_sentences_5",
+     "text": "I am learning English every day",
+     "meaning": "Tôi học tiếng Anh mỗi ngày",
+     "type": "sentence",
+     "ipa": "/aɪ æm ˈlɜːrnɪŋ ˈɪŋɡlɪʃ ˈevəriː deɪ/",
+     "phonemes": "AY1 | AE1 M | L ER1 N IH0 NG | IH1 NG G L IH0 SH | EH1 V ER0 IY0 | D EY1"
+    },
+    {
+     "id": "daily_sentences_6",
+     "text": "Nice to meet you too",
+     "meaning": "Tôi cũng rất vui được gặp bạn",
+     "type": "sentence",
+     "ipa": "/naɪs tuː miːt juː tuː/",
+     "phonemes": "N AY1 S | T UW1 | M IY1 T | Y UW1 | T UW1"
+    }
+   ]
+  },
+  {
+   "id": "travel_work",
+   "title": "Du lịch và công việc",
+   "level": 3,
+   "topic": "Câu",
+   "focus": [],
+   "description": "Các câu thông dụng khi đi du lịch và đi làm.",
+   "order": 11,
+   "items": [
+    {
+     "id": "travel_work_1",
+     "text": "Can I have the bill please",
+     "meaning": "Cho tôi xin hoá đơn",
+     "type": "sentence",
+     "ipa": "/kæn aɪ hæv ðə bɪl pliːz/",
+     "phonemes": "K AE1 N | AY1 | HH AE1 V | DH AH0 | B IH1 L | P L IY1 Z"
+    },
+    {
+     "id": "travel_work_2",
+     "text": "My flight leaves at three o'clock",
+     "meaning": "Chuyến bay của tôi lúc ba giờ",
+     "type": "sentence",
+     "ipa": "/maɪ flaɪt liːvz æt θriː əkˈlɑːk/",
+     "phonemes": "M AY1 | F L AY1 T | L IY1 V Z | AE1 T | TH R IY1 | AH0 K L AA1 K"
+    },
+    {
+     "id": "travel_work_3",
+     "text": "I usually work from nine to five",
+     "meaning": "Tôi thường làm từ chín giờ đến năm giờ",
+     "type": "sentence",
+     "ipa": "/aɪ ˈjuːʒəwəliː wɜːrk frʌm naɪn tuː faɪv/",
+     "phonemes": "AY1 | Y UW1 ZH AH0 W AH0 L IY0 | W ER1 K | F R AH1 M | N AY1 N | T UW1 | F AY1 V"
+    },
+    {
+     "id": "travel_work_4",
+     "text": "Is there a restaurant near here",
+     "meaning": "Gần đây có nhà hàng không",
+     "type": "sentence",
+     "ipa": "/ɪz ðer ə ˈrestərɑːnt nɪr hiːr/",
+     "phonemes": "IH1 Z | DH EH1 R | AH0 | R EH1 S T ER0 AA2 N T | N IH1 R | HH IY1 R"
+    },
+    {
+     "id": "travel_work_5",
+     "text": "I need to book a room for two nights",
+     "meaning": "Tôi cần đặt phòng hai đêm",
+     "type": "sentence",
+     "ipa": "/aɪ niːd tuː bʊk ə ruːm fɔːr tuː naɪts/",
+     "phonemes": "AY1 | N IY1 D | T UW1 | B UH1 K | AH0 | R UW1 M | F AO1 R | T UW1 | N AY1 T S"
+    },
+    {
+     "id": "travel_work_6",
+     "text": "The meeting starts tomorrow morning",
+     "meaning": "Cuộc họp bắt đầu sáng mai",
+     "type": "sentence",
+     "ipa": "/ðə ˈmiːtɪŋ stɑːrts təˈmɑːroʊ ˈmɔːrnɪŋ/",
+     "phonemes": "DH AH0 | M IY1 T IH0 NG | S T AA1 R T S | T AH0 M AA1 R OW2 | M AO1 R N IH0 NG"
+    }
+   ]
+  },
+  {
+   "id": "tongue_twisters",
+   "title": "Câu luyện lưỡi",
+   "level": 3,
+   "topic": "Câu",
+   "focus": [
+    "TH",
+    "S",
+    "SH",
+    "R",
+    "L"
+   ],
+   "description": "Câu khó để luyện độ chính xác và tốc độ.",
+   "order": 12,
+   "items": [
+    {
+     "id": "tongue_twisters_1",
+     "text": "She sells sea shells by the sea shore",
+     "meaning": "Cô ấy bán vỏ sò bên bờ biển",
+     "type": "sentence",
+     "ipa": "/ʃiː selz siː ʃelz baɪ ðə siː ʃɔːr/",
+     "phonemes": "SH IY1 | S EH1 L Z | S IY1 | SH EH1 L Z | B AY1 | DH AH0 | S IY1 | SH AO1 R"
+    },
+    {
+     "id": "tongue_twisters_2",
+     "text": "Three thin thieves thought a thousand thoughts",
+     "meaning": "Ba tên trộm gầy nghĩ hàng nghìn ý nghĩ",
+     "type": "sentence",
+     "ipa": "/θriː θɪn θiːvz θɔːt ə ˈθaʊzənd θɔːts/",
+     "phonemes": "TH R IY1 | TH IH1 N | TH IY1 V Z | TH AO1 T | AH0 | TH AW1 Z AH0 N D | TH AO1 T S"
+    },
+    {
+     "id": "tongue_twisters_3",
+     "text": "Red lorry yellow lorry",
+     "meaning": "Xe tải đỏ, xe tải vàng",
+     "type": "sentence",
+     "ipa": "/red ˈlɔːriː ˈjeloʊ ˈlɔːriː/",
+     "phonemes": "R EH1 D | L AO1 R IY0 | Y EH1 L OW0 | L AO1 R IY0"
+    },
+    {
+     "id": "tongue_twisters_4",
+     "text": "I think this is the right way",
+     "meaning": "Tôi nghĩ đây là đường đúng",
+     "type": "sentence",
+     "ipa": "/aɪ θɪŋk ðɪs ɪz ðə raɪt weɪ/",
+     "phonemes": "AY1 | TH IH1 NG K | DH IH1 S | IH1 Z | DH AH0 | R AY1 T | W EY1"
+    },
+    {
+     "id": "tongue_twisters_5",
+     "text": "The weather is very nice today",
+     "meaning": "Hôm nay thời tiết rất đẹp",
+     "type": "sentence",
+     "ipa": "/ðə ˈweðər ɪz ˈveriː naɪs təˈdeɪ/",
+     "phonemes": "DH AH0 | W EH1 DH ER0 | IH1 Z | V EH1 R IY0 | N AY1 S | T AH0 D EY1"
+    },
+    {
+     "id": "tongue_twisters_6",
+     "text": "Practice makes perfect",
+     "meaning": "Có công mài sắt có ngày nên kim",
+     "type": "sentence",
+     "ipa": "/ˈpræktəs meɪks pərˈfekt/",
+     "phonemes": "P R AE1 K T AH0 S | M EY1 K S | P ER0 F EH1 K T"
+    }
+   ]
+  }
+ ]
+}
