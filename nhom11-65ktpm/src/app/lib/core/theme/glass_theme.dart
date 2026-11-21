@@ -37,8 +37,8 @@ class GlassTheme extends ThemeExtension<GlassTheme> {
   });
 
   static const light = GlassTheme(
-    tint: Color(0x99FDFCF8),
-    thickTint: Color(0xD1FAF9F5),
+    tint: Color(0x66FDFCF8),
+    thickTint: Color(0xB8FAF9F5),
     rimHighlight: Color(0xE6FFFFFF),
     rimShade: Color(0x33E3DACC),
     blurSigma: 22,
@@ -48,16 +48,16 @@ class GlassTheme extends ThemeExtension<GlassTheme> {
     ],
     backdropBase: Color(0xFFF5F3EC), // giấy ngà
     backdropBlobs: [
-      Color(0xFFEFAE93), // clay nhạt
-      Color(0xFFEBDBBC), // manilla
-      Color(0xFFBCD1CA), // cactus nhạt
-      Color(0xFFCBCADB), // heather nhạt
+      Color(0xFFE8916E), // clay
+      Color(0xFFE9C98F), // manilla đậm
+      Color(0xFF8FBFB0), // cactus
+      Color(0xFFA9A3D6), // heather
     ],
   );
 
   static const dark = GlassTheme(
-    tint: Color(0x7330302E),
-    thickTint: Color(0xBF262624),
+    tint: Color(0x4D30302E),
+    thickTint: Color(0xA6262624),
     rimHighlight: Color(0x4DFAF9F5),
     rimShade: Color(0x0FFAF9F5),
     blurSigma: 26,
@@ -66,10 +66,10 @@ class GlassTheme extends ThemeExtension<GlassTheme> {
     ],
     backdropBase: Color(0xFF1F1E1D), // than chì ấm
     backdropBlobs: [
-      Color(0xFF7A3B24), // clay trầm
-      Color(0xFF5E4A2E), // kraft trầm
-      Color(0xFF2F4A42), // cactus trầm
-      Color(0xFF3E3A58), // heather trầm
+      Color(0xFFA44A2A), // clay trầm
+      Color(0xFF7A5C30), // kraft trầm
+      Color(0xFF2F6658), // cactus trầm
+      Color(0xFF4E4689), // heather trầm
     ],
   );
 
