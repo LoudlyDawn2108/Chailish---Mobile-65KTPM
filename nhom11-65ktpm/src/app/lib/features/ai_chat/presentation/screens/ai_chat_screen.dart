@@ -6,6 +6,8 @@ import '../../application/ai_chat_controller.dart';
 import '../../data/chat_voice_services.dart';
 import '../widgets/chat_bubbles.dart';
 import '../widgets/chat_input_bar.dart';
+import '../widgets/grammar_analysis_view.dart';
+import 'ai_chat_summary_screen.dart';
 
 /// Màn hình trò chuyện ôn bài cùng trợ lý AI sau mỗi bài học.
 class AiChatScreen extends ConsumerStatefulWidget {
@@ -83,6 +85,39 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
     });
   }
 
+  Future<void> _openSummary() async {
+    final conversationId = ref.read(aiChatControllerProvider).conversationId;
+    if (conversationId == null) return;
+    final controller = ref.read(aiChatControllerProvider.notifier);
+    controller.markFinished();
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => AiChatSummaryScreen(
+          conversationId: conversationId,
+          onPracticeAgain: () {
+            Navigator.of(context).pop();
+            controller.start(widget.lessonId);
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmFinishEarly() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Kết thúc phiên?'),
+        content: const Text('Bạn muốn dừng trò chuyện và xem tổng kết ngay bây giờ?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Tiếp tục')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Kết thúc')),
+        ],
+      ),
+    );
+    if (ok == true) await _openSummary();
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(aiChatControllerProvider);
@@ -113,6 +148,15 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
               Text(widget.lessonTitle!, style: Theme.of(context).textTheme.labelMedium),
           ],
         ),
+        actions: [
+          if (state.phase == ChatPhase.ready && state.turnCount > 0)
+            IconButton(
+              key: const Key('finish-early'),
+              tooltip: 'Kết thúc & tổng kết',
+              icon: const Icon(Icons.flag_outlined),
+              onPressed: _confirmFinishEarly,
+            ),
+        ],
         bottom: state.conversationId == null
             ? null
             : PreferredSize(
@@ -155,12 +199,17 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
                         onSpeakSlow: () => tts.speak(bubble.text, slow: true),
                       );
                     }
-                    return UserBubble(bubble: bubble);
+                    return UserBubble(
+                      bubble: bubble,
+                      onOpenGrammar: bubble.grammar == null
+                          ? null
+                          : () => showGrammarAnalysisSheet(context, bubble.grammar!),
+                    );
                   },
                 ),
               ),
               if (state.phase == ChatPhase.finished)
-                const _FinishedBanner()
+                _FinishedBanner(onViewSummary: _openSummary)
               else ...[
                 SuggestedRepliesBar(
                   suggestions: state.suggestions,
@@ -239,7 +288,9 @@ class _Disclaimer extends StatelessWidget {
 }
 
 class _FinishedBanner extends StatelessWidget {
-  const _FinishedBanner();
+  final VoidCallback onViewSummary;
+
+  const _FinishedBanner({required this.onViewSummary});
 
   @override
   Widget build(BuildContext context) {
@@ -250,10 +301,22 @@ class _FinishedBanner extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         color: AppColors.jadeGreen.withValues(alpha: 0.1),
-        child: const Text(
-          'Bạn đã hoàn thành phiên trò chuyện! 🎉',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.jadeGreen),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Bạn đã hoàn thành phiên trò chuyện! 🎉',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.jadeGreen),
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton.icon(
+              key: const Key('view-summary'),
+              onPressed: onViewSummary,
+              icon: const Icon(Icons.insights_outlined),
+              label: const Text('Xem tổng kết'),
+            ),
+          ],
         ),
       ),
     );
