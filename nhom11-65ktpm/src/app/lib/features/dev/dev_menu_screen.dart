@@ -70,6 +70,7 @@ class _DevMenuScreenState extends ConsumerState<DevMenuScreen> {
       body: AbsorbPointer(
         absorbing: _busy,
         child: ListView(
+          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
           padding: EdgeInsets.fromLTRB(16, pad.top + 12, 16, pad.bottom + 24),
           children: [
             section('Tài khoản', [

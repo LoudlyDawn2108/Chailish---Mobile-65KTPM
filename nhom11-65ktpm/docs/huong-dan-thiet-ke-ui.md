@@ -220,6 +220,8 @@ Tham số hay dùng của `GlassSurface`: `thick`, `tint`, `shadow` (tắt bóng
 - Kính dày (có làm mờ) và kính nhỏ (cạnh ngắn < 64 px, vd. nút tròn) kéo mẫu **vào trong** để không hút viền thanh tiêu đề hay nút bên cạnh vào mép.
 - Độ sáng của nền lấy từ ngoài mép được cân về bằng nền ngay dưới kính, để bóng đổ của chính kính không tạo dải tối ở mép.
 - Bóng đổ chỉ vẽ phía ngoài kính (`_OuterShadowPainter`), phần dưới kính được xoá với mép mềm.
+- **Kính lồng trong kính** (nút trong thẻ, viên trong banner...) tự tắt khúc xạ và chỉ vẽ lớp phủ đặc hơn + viền trên nền kính cha. Lý do: Impeller đưa cho `BackdropFilter` lồng nhau một texture nền nhỏ có gốc toạ độ khác màn hình, shader sẽ lấy mẫu sai chỗ (lòng nút trắng loá, dải lệch ở mép). Việc này tự động qua `_GlassScope`, không cần làm gì thêm.
+- Toàn app cuộn kiểu iOS (`AppScrollBehavior` trong `main.dart`: nảy ở mép, không kéo giãn kiểu Android). Hiệu ứng kéo giãn biến đổi nội dung mà không đổi vị trí cuộn nên kính không được vẽ lại và bị lệch. Đừng đặt lại `ClampingScrollPhysics` hay `StretchingOverscrollIndicator` cho danh sách có kính.
 - Shader cần biết vị trí kính trên màn hình, nên `LensBackdrop` tự vẽ lại khi cuộn và khi chuyển trang. Nếu kính nằm trong animation tự viết (không phải cuộn/route) mà mép bị "trễ" so với nền, gọi `setState` theo animation đó.
 
 Thông số trong `LensOptics` (mặc định `bezel: 24, refraction: 11, dispersion: 0.3, specular: 0.55`). Chỉ đổi khi thật cần, vd. thẻ rất lớn có thể tăng `bezel`. Ở chế độ tối, độ sáng viền tự giảm còn 55%.

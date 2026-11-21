@@ -67,7 +67,12 @@ class GlassSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final g = GlassTheme.of(context);
-    final fill = tint ?? (thick ? g.thickTint : g.tint);
+    // Kính nằm TRONG một kính khác (nút trong thẻ...) không tự lấy mẫu nền:
+    // Impeller đưa cho BackdropFilter lồng nhau một texture nền nhỏ, gốc toạ độ
+    // khác màn hình nên shader khúc xạ lấy sai chỗ (lòng nút trắng, dải lệch ở
+    // mép). Kính con chỉ vẽ lớp phủ đặc hơn + viền trên nền kính cha.
+    final nested = _GlassScope.isInside(context);
+    final fill = tint ?? (thick ? g.thickTint : (nested ? Color.lerp(g.tint, g.thickTint, 0.5)! : g.tint));
     final top = fill.withValues(alpha: (fill.a + 0.03).clamp(0.0, 1.0));
 
     Widget content = CustomPaint(
@@ -79,7 +84,7 @@ class GlassSurface extends StatelessWidget {
         child: padding == null ? child : Padding(padding: padding!, child: child),
       ),
     );
-    if (blur) {
+    if (blur && !(nested && GlassLens.available)) {
       ui.ImageFilter frosted(double sigma) => ui.ImageFilter.compose(
         outer: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma, tileMode: TileMode.mirror),
         inner: _vibrancy,
@@ -101,12 +106,22 @@ class GlassSurface extends StatelessWidget {
             )
           : BackdropFilter(filter: frosted(g.blurSigma), child: content);
     }
-    content = ClipRSuperellipse(borderRadius: borderRadius, child: content);
+    content = ClipRSuperellipse(borderRadius: borderRadius, child: _GlassScope(child: content));
     if (shadow) {
       content = CustomPaint(painter: _OuterShadowPainter(borderRadius, g.shadows, shadowScale), child: content);
     }
     return content;
   }
+}
+
+/// Đánh dấu cây con nằm bên trong một [GlassSurface] (xem `nested` ở trên).
+class _GlassScope extends InheritedWidget {
+  const _GlassScope({required super.child});
+
+  static bool isInside(BuildContext context) => context.getInheritedWidgetOfExactType<_GlassScope>() != null;
+
+  @override
+  bool updateShouldNotify(_GlassScope oldWidget) => false;
 }
 
 /// Bóng đổ chỉ vẽ ở PHÍA NGOÀI hình kính.

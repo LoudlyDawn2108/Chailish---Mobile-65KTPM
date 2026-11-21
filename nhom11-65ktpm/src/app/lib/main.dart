@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/routing/app_router.dart';
+import 'core/theme/app_scroll_behavior.dart';
 import 'core/theme/app_theme.dart';
 import 'core/widgets/glass_lens.dart';
 
@@ -23,6 +24,7 @@ class ChaiLishApp extends StatelessWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
       routerConfig: appRouter,
+      scrollBehavior: const AppScrollBehavior(),
     );
   }
 }
