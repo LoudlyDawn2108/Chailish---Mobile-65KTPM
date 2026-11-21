@@ -151,10 +151,13 @@ class FakeVoiceRecorder with FakeImplementation implements VoiceRecorder {
 
 // ──────────────────────────────────────────────── Pinyin · Chủ sở hữu: Khánh (#12)
 
-/// Đổi chữ Hán sang Pinyin có dấu (đã áp dụng biến điệu 3-3, 一, 不).
+/// Đổi chữ Hán sang Pinyin có dấu.
 abstract class PinyinService {
   /// "你好" → "nǐ hǎo". Mỗi âm tiết cách nhau một dấu cách.
-  Future<String> toPinyin(String hanzi);
+  ///
+  /// Mặc định giữ thanh điệu gốc theo từ điển (để hiển thị). [applySandhi] = true
+  /// trả cách đọc thực tế sau biến điệu 3-3, 一, 不 ("ní hǎo"), dùng khi chấm phát âm.
+  Future<String> toPinyin(String hanzi, {bool applySandhi = false});
 }
 
 final pinyinServiceProvider = Provider<PinyinService>((ref) {
@@ -162,6 +165,7 @@ final pinyinServiceProvider = Provider<PinyinService>((ref) {
 });
 
 /// Bản giả: tra trong từ vựng của các bài mẫu (không có trong bài thì trả "?").
+/// Chưa xử lý biến điệu: [applySandhi] bị bỏ qua.
 class FakePinyinService with FakeImplementation implements PinyinService {
   final LessonRepository _lessons;
   Map<String, String>? _dict;
@@ -169,7 +173,7 @@ class FakePinyinService with FakeImplementation implements PinyinService {
   FakePinyinService(this._lessons);
 
   @override
-  Future<String> toPinyin(String hanzi) async {
+  Future<String> toPinyin(String hanzi, {bool applySandhi = false}) async {
     _dict ??= {
       for (final l in await _lessons.lessons())
         for (final w in l.words) w.hanzi: w.pinyin.toLowerCase(),

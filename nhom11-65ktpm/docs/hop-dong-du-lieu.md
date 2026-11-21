@@ -30,6 +30,7 @@ Toàn bộ nằm trong `src/app/lib/core/contracts/`. Chỉ cần `import 'packa
 | `SpeechRecognizer` | `speechRecognizerProvider` | *(đã thật)* `SpeechToTextRecognizer` | Khánh #11 | Phát âm, AI |
 | `VoiceRecorder` | `voiceRecorderProvider` | `FakeVoiceRecorder` (sóng âm hình sin) | Khánh #11 | Phát âm |
 | `PronunciationScorer` | `pronunciationScorerProvider` | `FakePronunciationScorer` | Khánh #13 #14 | Phát âm |
+| `scoringModeProvider` | (Notifier) | *(thật, chưa lưu xuống máy)* mặc định ưu tiên online | Đệ #24 (màn Cài đặt + lưu) | Khánh #14 |
 | `pronunciationTipsProvider` | (FutureProvider) | file mẫu 3 mẹo | Hoa #22 (dữ liệu) | Phát âm #15 |
 | `HanziRepository` | `hanziRepositoryProvider` | `FakeHanziRepository` (一二三十人大口) | Đệ #26 | Viết chữ, Trang chủ |
 | `Outbox` | `outboxProvider` | `MemoryOutbox` (RAM, chưa retry) | Đệ #23 #25 | ProgressService và mọi dữ liệu cần đồng bộ |
@@ -182,6 +183,7 @@ Dùng **chung** cho engine offline (#13) và API online (#14). Màn phản hồi
 }
 ```
 
+- `PinyinService.toPinyin(hanzi)` trả thanh điệu gốc (hiển thị); `toPinyin(hanzi, applySandhi: true)` trả cách đọc sau biến điệu, nên dùng làm `expected` khi chấm.
 - Thanh điệu: 1–4, **5 = thanh nhẹ**. Tách âm tiết bằng `splitPinyin()` (trong `pronunciation_scorer.dart`). Khánh có thể thay bằng bản đầy đủ hơn ở #13.
 - Ghi âm (`VoiceRecorder.stop()`) trả `Recording(path, duration)`: file WAV 16 kHz mono. Bản giả trả `path = null`.
 
