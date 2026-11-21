@@ -279,24 +279,29 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
         const SizedBox(width: 8),
       ],
       bottom: bottom,
+      // SizedBox.expand: nếu không, lớp kính co về 0×0 và trên Impeller
+      // BackdropFilter không làm mờ gì cả (thanh trong suốt, chữ đè lên nhau).
       flexibleSpace: _fade(
-        ClipRect(
-          child: BackdropFilter(
-            filter: ui.ImageFilter.compose(
-              outer: ui.ImageFilter.blur(sigmaX: g.blurSigma, sigmaY: g.blurSigma, tileMode: TileMode.mirror),
-              inner: _vibrancy,
-            ),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    g.thickTint,
-                    g.tint.withValues(alpha: g.tint.a * 0.6),
-                  ],
+        SizedBox.expand(
+          child: ClipRect(
+            child: BackdropFilter(
+              filter: ui.ImageFilter.compose(
+                outer: ui.ImageFilter.blur(sigmaX: g.blurSigma, sigmaY: g.blurSigma, tileMode: TileMode.mirror),
+                inner: _vibrancy,
+              ),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      g.thickTint,
+                      g.tint.withValues(alpha: g.tint.a * 0.6),
+                    ],
+                  ),
+                  border: Border(bottom: BorderSide(color: g.rimHighlight.withValues(alpha: 0.5), width: 0.5)),
                 ),
-                border: Border(bottom: BorderSide(color: g.rimHighlight.withValues(alpha: 0.5), width: 0.5)),
+                child: const SizedBox.expand(),
               ),
             ),
           ),
