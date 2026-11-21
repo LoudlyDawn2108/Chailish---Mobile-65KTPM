@@ -126,14 +126,8 @@ class _OuterShadowPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (scale <= 0) return;
     final shape = radius.toRRect(Offset.zero & size);
-    canvas.save();
-    canvas.clipPath(
-      Path.combine(
-        PathOperation.difference,
-        Path()..addRect((Offset.zero & size).inflate(200)),
-        Path()..addRRect(shape),
-      ),
-    );
+    final bounds = (Offset.zero & size).inflate(200);
+    canvas.saveLayer(bounds, Paint());
     for (final s in shadows) {
       final scaled = BoxShadow(
         color: s.color.withValues(alpha: (s.color.a * scale.clamp(0.0, 1.0))),
@@ -143,6 +137,15 @@ class _OuterShadowPainter extends CustomPainter {
       );
       canvas.drawRRect(shape.shift(scaled.offset).inflate(scaled.spreadRadius), scaled.toPaint());
     }
+    // Xoá phần bóng nằm dưới kính với mép xoá mềm (thay cho clip cứng): mép
+    // kính khúc xạ lấy mẫu cả vùng sát ngoài, nếu bóng bị cắt gắt thì vết cắt
+    // đó bị kéo vào thành một đường viền tách rời phần lòng kính.
+    canvas.drawRRect(
+      shape.deflate(2),
+      Paint()
+        ..blendMode = BlendMode.dstOut
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
+    );
     canvas.restore();
   }
 

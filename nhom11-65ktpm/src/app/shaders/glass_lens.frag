@@ -30,16 +30,17 @@ void main() {
   vec2 frag = FlutterFragCoord().xy;
   vec2 half_size = u_rect.zw * 0.5;
   vec2 p = frag - (u_rect.xy + half_size);
-  // Bán kính ≥ bezel: nếu nhỏ hơn, pháp tuyến SDF bị gãy theo đường chéo
-  // trong dải bezel ở góc làm mẫu nền nhảy cóc.
-  float r = min(max(u_radius, u_bezel + 2.0), min(half_size.x, half_size.y));
+  float r = min(u_radius, min(half_size.x, half_size.y));
   float d = sdRoundBox(p, half_size, r);
 
-  // Pháp tuyến mặt kính từ gradient của SDF.
+  // Pháp tuyến lấy từ một hình bo tròn hơn (bán kính ≥ bezel): với bán kính
+  // thật, pháp tuyến bị gãy theo đường chéo trong dải bezel ở góc làm mẫu nền
+  // nhảy cóc. Khoảng cách d vẫn dùng bán kính thật để khớp đúng hình cắt.
+  float rn = min(max(r, u_bezel + 2.0), min(half_size.x, half_size.y));
   float e = 1.0;
   vec2 grad = vec2(
-    sdRoundBox(p + vec2(e, 0.0), half_size, r) - sdRoundBox(p - vec2(e, 0.0), half_size, r),
-    sdRoundBox(p + vec2(0.0, e), half_size, r) - sdRoundBox(p - vec2(0.0, e), half_size, r));
+    sdRoundBox(p + vec2(e, 0.0), half_size, rn) - sdRoundBox(p - vec2(e, 0.0), half_size, rn),
+    sdRoundBox(p + vec2(0.0, e), half_size, rn) - sdRoundBox(p - vec2(0.0, e), half_size, rn));
   vec2 n = length(grad) > 0.0 ? normalize(grad) : vec2(0.0);
 
   // 1 ở sát mép, giảm mượt (Gauss) về 0 vào trong lòng kính – không có
@@ -77,8 +78,6 @@ void main() {
   float facing = dot(n, L);
   float rim = exp(-max(-d, 0.0) / max(u_light.w, 0.5));
   float spec = (pow(max(facing, 0.0), 2.0) + 0.45 * pow(max(-facing, 0.0), 2.0)) * rim * u_light.z;
-  // Dải sáng mềm trên bezel làm kính có độ dày.
-  spec += profile * profile * 0.18 * u_light.z * (0.5 + 0.5 * abs(facing));
   col.rgb = min(col.rgb + vec3(spec) * col.a, vec3(col.a));
   frag_color = col;
 }
