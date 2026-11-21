@@ -80,8 +80,14 @@ class FakeAiChatRepository implements AiChatRepository {
   @override
   Future<AiConversation> getConversation(String id) async => startResult;
 
+  int finishCalls = 0;
+  AiConversation? finishResult;
+
   @override
-  Future<AiConversation> finishConversation(String id) async => startResult;
+  Future<AiConversation> finishConversation(String id) async {
+    finishCalls++;
+    return finishResult ?? completedConversation();
+  }
 
   /// Phát một lượt trả lời hoàn chỉnh.
   Future<void> completeTurn({bool correct = true, int turnCount = 1, bool shouldFinish = false}) async {
@@ -122,3 +128,49 @@ class FakeSpeechInput implements ChatSpeechInput {
   @override
   Future<void> stop() async {}
 }
+
+AiConversation completedConversation() => AiConversation.fromJson({
+      'id': 'c1',
+      'lesson_id': 1,
+      'status': 'completed',
+      'turn_count': 2,
+      'max_turns': 8,
+      'overall_score': 85.0,
+      'summary': {
+        'overall_score': 85.0,
+        'turns': 2,
+        'correct_sentences': 1,
+        'error_counts': {'Dùng sai động từ': 1},
+        'top_errors': [
+          {
+            'sentence': '我学生。',
+            'span': '我学生',
+            'correction': '我是学生',
+            'error_type': 'verb_usage',
+            'label_vi': 'Dùng sai động từ',
+            'explanation_vi': 'Thiếu động từ 是.',
+          }
+        ],
+        'grammar_points_to_review': ['gp-shi'],
+        'comment_vi': 'Làm tốt lắm! Xem lại vài lỗi bên dưới.',
+      },
+      'messages': [
+        assistantJson('a1', '你好！你是学生吗？'),
+        {
+          'id': 'u1',
+          'role': 'user',
+          'content': '我学生。',
+          'input_method': 'text',
+          'grammar_feedback': grammarJson(correct: false),
+        },
+        assistantJson('a2', '你叫什么名字？'),
+        {
+          'id': 'u2',
+          'role': 'user',
+          'content': '我是学生。',
+          'input_method': 'voice',
+          'grammar_feedback': {...grammarJson(correct: true), 'id': 'g2'},
+        },
+      ],
+      'disclaimer_vi': 'Phân tích do AI tạo ra và có thể chưa hoàn toàn chính xác.',
+    });
