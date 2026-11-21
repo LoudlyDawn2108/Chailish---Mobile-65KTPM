@@ -44,9 +44,10 @@ void main() {
   vec2 n = length(grad) > 0.0 ? normalize(grad) : vec2(0.0);
 
   // 1 ở sát mép, giảm mượt (Gauss) về 0 vào trong lòng kính – không có
-  // điểm gãy nên dải khúc xạ chuyển tiếp êm vào phần kính phẳng.
+  // điểm gãy nên dải khúc xạ chuyển tiếp êm vào phần kính phẳng. Đuôi Gauss
+  // kéo dài quá bezel (~1.6×) để ranh giới mép/lòng kính tan dần, không lộ.
   float x = max(-d, 0.0) / max(u_bezel, 1.0);
-  float profile = exp(-4.0 * x * x);
+  float profile = exp(-1.8 * x * x);
   vec2 offset;
   if (u_strength >= 0.0) {
     // Kính trong: mép cong như thấu kính dày – lấy mẫu nền ở PHÍA NGOÀI rồi
@@ -59,8 +60,8 @@ void main() {
     offset -= p * 0.035 * (1.0 - profile);
   } else {
     // Kính mờ (dày): kéo mẫu vào trong. Giới hạn độ lệch để ánh xạ đơn điệu:
-    // max|f'| của exp(-4x²) ≈ 1.72 → S < 0.58 · bezel.
-    offset = n * profile * max(u_strength, -0.45 * u_bezel);
+    // max|f'| của exp(-1.8x²) ≈ 1.15 → S < 0.87 · bezel.
+    offset = n * profile * max(u_strength, -0.7 * u_bezel);
   }
   vec4 col;
   if (u_dispersion > 0.0) {
@@ -71,6 +72,17 @@ void main() {
     col.a = sampleAt(frag + offset).a;
   } else {
     col = sampleAt(frag + offset);
+  }
+
+  // Nền lấy từ phía ngoài mép có lẫn bóng đổ của chính kính nên tối hơn lòng
+  // kính → thành một dải tối tách mép khỏi lòng kính. Giữ màu khúc xạ nhưng
+  // kéo độ sáng về bằng nền ngay phía dưới (chỉ làm sáng, không làm tối).
+  if (u_strength > 0.0) {
+    const vec3 W = vec3(0.2126, 0.7152, 0.0722);
+    float lr = dot(sampleAt(frag).rgb, W);
+    float lc = dot(col.rgb, W);
+    float gain = clamp(lr / max(lc, 1e-3), 1.0, 1.2);
+    col.rgb = min(col.rgb * mix(1.0, gain, profile), vec3(col.a));
   }
 
   // Ánh phản chiếu: viền mảnh sáng theo hướng nguồn sáng (cả phía đối diện, yếu hơn).
