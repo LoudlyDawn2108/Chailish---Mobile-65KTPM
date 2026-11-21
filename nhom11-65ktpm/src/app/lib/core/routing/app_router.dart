@@ -8,6 +8,7 @@ import '../../features/pronunciation/presentation/screens/pronunciation_screen.d
 import '../../features/writing/presentation/screens/writing_screen.dart';
 import '../../features/flashcard/presentation/screens/flashcard_screen.dart';
 import '../../features/ai_chat/presentation/screens/ai_chat_screen.dart';
+import '../../features/ai_chat/presentation/screens/ai_chat_summary_screen.dart';
 import '../../features/statistics/presentation/screens/statistics_screen.dart';
 
 final appRouter = GoRouter(
@@ -48,6 +49,10 @@ final appRouter = GoRouter(
         lessonId: int.tryParse(state.uri.queryParameters['lessonId'] ?? '') ?? 1,
         lessonTitle: state.uri.queryParameters['title'],
       ),
+    ),
+    GoRoute(
+      path: '${AppConstants.aiChatRoute}/summary/:id',
+      builder: (context, state) => AiChatSummaryScreen(conversationId: state.pathParameters['id']!),
     ),
     GoRoute(
       path: AppConstants.statisticsRoute,

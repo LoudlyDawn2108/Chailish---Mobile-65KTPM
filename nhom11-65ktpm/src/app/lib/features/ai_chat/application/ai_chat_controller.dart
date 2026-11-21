@@ -210,6 +210,11 @@ class AiChatController extends Notifier<AiChatState> {
     state = state.copyWith(revealedTranslations: revealed);
   }
 
+  /// Đánh dấu phiên đã kết thúc (khi người học mở màn hình tổng kết).
+  void markFinished() {
+    if (!state.isBusy) state = state.copyWith(phase: ChatPhase.finished);
+  }
+
   void clearError() => state = state.copyWith(clearError: true, clearFailedInput: true);
 
   /// Gửi câu trả lời; [inputMethod] là `text` (gõ phím) hoặc `voice` (nói).
