@@ -19,6 +19,19 @@ abstract class PronunciationScorer {
 
 final pronunciationScorerProvider = Provider<PronunciationScorer>((ref) => FakePronunciationScorer());
 
+/// Cài đặt chế độ chấm. Màn Cài đặt của **Đệ** (#24) đổi và lưu giá trị;
+/// bộ chấm kết hợp của **Khánh** (#14) đọc `ref.watch(scoringModeProvider)`.
+enum ScoringMode { preferOnline, offlineOnly }
+
+final scoringModeProvider = NotifierProvider<ScoringModeNotifier, ScoringMode>(ScoringModeNotifier.new);
+
+class ScoringModeNotifier extends Notifier<ScoringMode> {
+  @override
+  ScoringMode build() => ScoringMode.preferOnline; // #24: đọc giá trị đã lưu trên máy
+
+  void set(ScoringMode mode) => state = mode;
+}
+
 /// Bản giả: điểm cố định theo câu mẫu (cùng câu → cùng kết quả), có đủ 3 màu
 /// xanh / vàng / đỏ và đủ loại lỗi để dựng màn phản hồi.
 class FakePronunciationScorer with FakeImplementation implements PronunciationScorer {
