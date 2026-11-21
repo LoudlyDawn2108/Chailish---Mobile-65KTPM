@@ -123,6 +123,12 @@ class ApiClient {
         final newToken = data['access_token'];
         if (newToken != null) {
           await storage.saveToken(newToken);
+          // Server xoay vòng refresh token: token cũ bị thu hồi sau mỗi lần refresh,
+          // nên phải lưu lại refresh token mới để lần sau còn dùng được.
+          final newRefreshToken = data['refresh_token'];
+          if (newRefreshToken is String && newRefreshToken.isNotEmpty) {
+            await storage.saveRefreshToken(newRefreshToken);
+          }
           return true;
         }
       }
