@@ -224,7 +224,11 @@ class _RenderLensBackdrop extends RenderProxyBox {
     f(rect.height);
     f(_radius * k);
     f((_optics.bezel * k).clamp(1.0, shortest / 2));
-    f(_optics.refraction * k * (_outside ? 1 : -1));
+    // Kính nhỏ (nút tròn, chip) gần như toàn bộ là bezel: lấy mẫu ra ngoài sẽ
+    // kéo cả viền thanh điều hướng, nút bên cạnh... vào mép → chỉ khúc xạ
+    // vào trong.
+    final outside = _outside && size.shortestSide >= 64;
+    f(_optics.refraction * k * (outside ? 1 : -1));
     f(_optics.dispersion);
     f(_light.dx);
     f(_light.dy);
