@@ -25,4 +25,5 @@ class AppConstants {
   static const String flashcardRoute = '/flashcard';
   static const String aiChatRoute = '/ai-chat';
   static const String statisticsRoute = '/statistics';
+  static const String devMenuRoute = '/dev';
 }

@@ -10,6 +10,7 @@ import '../../features/flashcard/presentation/screens/flashcard_screen.dart';
 import '../../features/ai_chat/presentation/screens/ai_chat_screen.dart';
 import '../../features/ai_chat/presentation/screens/ai_chat_summary_screen.dart';
 import '../../features/statistics/presentation/screens/statistics_screen.dart';
+import '../../features/dev/dev_menu_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: AppConstants.homeRoute,
@@ -57,6 +58,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: AppConstants.statisticsRoute,
       builder: (context, state) => const StatisticsScreen(),
+    ),
+    GoRoute(
+      path: AppConstants.devMenuRoute,
+      builder: (context, state) => const DevMenuScreen(),
     ),
   ],
 );

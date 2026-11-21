@@ -168,6 +168,8 @@ nhom11-65ktpm/
 ├── docs/                        # Tài liệu hướng dẫn, báo cáo, slide thuyết trình
 │   ├── huong-dan-setup.md       # Cài đặt môi trường, chạy app/server, quy trình Git
 │   ├── huong-dan-thiet-ke-ui.md # Hướng dẫn thiết kế giao diện (design system)
+│   ├── lam-viec-song-song.md    # Chia việc theo lát dọc, menu dev, thay bản giả bằng bản thật
+│   ├── hop-dong-du-lieu.md      # Định dạng dữ liệu + interface dùng chung giữa các tính năng
 │   ├── api-tro-ly-ai.md         # Hợp đồng API Trợ lý AI
 │   └── trien-khai-docker.md     # Triển khai Docker Compose, HTTPS, CI
 └── src/                         # Toàn bộ mã nguồn dự án
@@ -205,6 +207,8 @@ nhom11-65ktpm/
 > 📘 Hướng dẫn chi tiết từng bước (chạy trên điện thoại thật, tài khoản demo, lỗi hay gặp): **[docs/huong-dan-setup.md](docs/huong-dan-setup.md)**
 >
 > 🎨 Hướng dẫn thiết kế giao diện (màu, chữ, vật liệu kính, chuyển động, checklist UI): **[docs/huong-dan-thiet-ke-ui.md](docs/huong-dan-thiet-ke-ui.md)**
+>
+> 🧩 Làm song song không chờ nhau (hợp đồng, bản giả, menu dev, sự kiện học tập): **[docs/lam-viec-song-song.md](docs/lam-viec-song-song.md)** · **[docs/hop-dong-du-lieu.md](docs/hop-dong-du-lieu.md)**
 
 ### 6.1. Yêu cầu môi trường tiền đề
 - **Flutter SDK:** Phiên bản `3.47.x` (Dart 3.13, kèm Android SDK Platform 37 / Android Studio)
