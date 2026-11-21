@@ -290,3 +290,12 @@ def test_public_auth_endpoints_rate_limited_per_ip(client):
     for _ in range(settings.AUTH_REQUESTS_PER_MINUTE):
         assert client.post("/api/auth/forgot-password", json=body).status_code == 202
     assert client.post("/api/auth/forgot-password", json=body).status_code == 429
+
+
+def test_spoofed_forwarded_for_does_not_bypass_login_limit(client, register_user):
+    register_user()
+    wrong = {"email": "hoc@chailish.vn", "password": "saimatkhau1"}
+    for i in range(settings.LOGIN_MAX_FAILURES):
+        client.post("/api/auth/login", json=wrong, headers={"X-Forwarded-For": f"10.0.0.{i}"})
+    res = client.post("/api/auth/login", json=wrong, headers={"X-Forwarded-For": "10.9.9.9"})
+    assert res.status_code == 429
