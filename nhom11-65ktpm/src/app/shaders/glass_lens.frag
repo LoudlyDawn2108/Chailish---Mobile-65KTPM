@@ -6,7 +6,7 @@ uniform vec2 u_size;       // kích thước texture nền (engine tự gán)
 uniform vec4 u_rect;       // left, top, width, height của kính (pixel thiết bị)
 uniform float u_radius;    // bán kính bo góc (pixel)
 uniform float u_bezel;     // độ dày mép khúc xạ (pixel)
-uniform float u_strength;  // độ lệch tối đa khi khúc xạ (pixel)
+uniform float u_strength;  // độ lệch tối đa (pixel); > 0 lấy mẫu ra ngoài, < 0 vào trong
 uniform float u_dispersion;// tán sắc (0..1)
 uniform vec4 u_light;      // xy = hướng sáng, z = độ sáng viền, w = độ dày viền (pixel)
 uniform sampler2D u_texture;
@@ -21,7 +21,8 @@ float sdRoundBox(vec2 p, vec2 b, float r) {
 vec4 sampleAt(vec2 px) {
   // Không lật trục y ở GLES: với BackdropFilter, FlutterFragCoord và texture
   // nền đã cùng hướng (đã kiểm tra trên máy thật Impeller/OpenGLES).
-  vec2 uv = clamp(px / u_size, vec2(0.0), vec2(1.0));
+  // Chừa 2px: cột/hàng pixel sát mép texture nền có thể chứa rác.
+  vec2 uv = clamp(px, vec2(2.0), u_size - 2.0) / u_size;
   return texture(u_texture, uv);
 }
 
@@ -29,7 +30,9 @@ void main() {
   vec2 frag = FlutterFragCoord().xy;
   vec2 half_size = u_rect.zw * 0.5;
   vec2 p = frag - (u_rect.xy + half_size);
-  float r = min(u_radius, min(half_size.x, half_size.y));
+  // Bán kính ≥ bezel: nếu nhỏ hơn, pháp tuyến SDF bị gãy theo đường chéo
+  // trong dải bezel ở góc làm mẫu nền nhảy cóc.
+  float r = min(max(u_radius, u_bezel + 2.0), min(half_size.x, half_size.y));
   float d = sdRoundBox(p, half_size, r);
 
   // Pháp tuyến mặt kính từ gradient của SDF.
@@ -39,15 +42,25 @@ void main() {
     sdRoundBox(p + vec2(0.0, e), half_size, r) - sdRoundBox(p - vec2(0.0, e), half_size, r));
   vec2 n = length(grad) > 0.0 ? normalize(grad) : vec2(0.0);
 
-  // 0 ở trong lòng kính, 1 ở sát mép. Mặt cong dạng vòm (circle profile).
-  float inside = clamp(-d, 0.0, u_bezel);
-  float t = 1.0 - inside / max(u_bezel, 1.0);
-  float profile = t * t;
-
-  // Kéo mẫu nền vào phía trong → nền bị bẻ cong ở mép. Giới hạn độ lệch để
-  // ánh xạ luôn đơn điệu (không bị "gập" tạo vệt sáng): S * f'(t) / bezel < 1.
-  float strength = min(u_strength, 0.45 * u_bezel);
-  vec2 offset = -n * profile * strength;
+  // 1 ở sát mép, giảm mượt (Gauss) về 0 vào trong lòng kính – không có
+  // điểm gãy nên dải khúc xạ chuyển tiếp êm vào phần kính phẳng.
+  float x = max(-d, 0.0) / max(u_bezel, 1.0);
+  float profile = exp(-4.0 * x * x);
+  vec2 offset;
+  if (u_strength >= 0.0) {
+    // Kính trong: mép cong như thấu kính dày – lấy mẫu nền ở PHÍA NGOÀI rồi
+    // nén vào dải bezel, nên nền xung quanh (cả bóng đổ) "tràn" vào mép kính.
+    // Ánh xạ này luôn đơn điệu nên không bị gập dù độ lệch lớn.
+    // (Chỉ dùng khi KHÔNG làm mờ trước: kết quả làm mờ chỉ có trong khung
+    // kính, lấy mẫu ra ngoài sẽ thấy đường nối.)
+    offset = n * profile * min(u_strength, 1.2 * u_bezel);
+    // Lòng kính phóng to rất nhẹ (như mặt kính hơi vồng lên).
+    offset -= p * 0.035 * (1.0 - profile);
+  } else {
+    // Kính mờ (dày): kéo mẫu vào trong. Giới hạn độ lệch để ánh xạ đơn điệu:
+    // max|f'| của exp(-4x²) ≈ 1.72 → S < 0.58 · bezel.
+    offset = n * profile * max(u_strength, -0.45 * u_bezel);
+  }
   vec4 col;
   if (u_dispersion > 0.0) {
     float k = u_dispersion * profile;

@@ -41,7 +41,7 @@ class LensOptics {
   /// Độ sáng viền phản chiếu.
   final double specular;
 
-  const LensOptics({this.bezel = 22, this.refraction = 10, this.dispersion = 0.6, this.specular = 0.55});
+  const LensOptics({this.bezel = 24, this.refraction = 18, this.dispersion = 0.6, this.specular = 0.55});
 
   LensOptics copyWith({double? bezel, double? refraction, double? dispersion, double? specular}) => LensOptics(
     bezel: bezel ?? this.bezel,
@@ -75,6 +75,10 @@ class LensBackdrop extends StatefulWidget {
   /// Hướng nguồn sáng (mặc định: từ trên-trái).
   final Offset light;
 
+  /// `true`: lấy mẫu nền ra phía ngoài mép (kính trong, [baseFilter] không
+  /// được làm mờ). `false`: kéo mẫu vào trong (dùng được với nền đã làm mờ).
+  final bool sampleOutside;
+
   const LensBackdrop({
     super.key,
     required this.child,
@@ -82,6 +86,7 @@ class LensBackdrop extends StatefulWidget {
     required this.baseFilter,
     this.optics = const LensOptics(),
     this.light = const Offset(-0.55, -0.85),
+    this.sampleOutside = true,
   });
 
   @override
@@ -134,6 +139,7 @@ class _LensBackdropState extends State<LensBackdrop> {
       baseFilter: widget.baseFilter,
       optics: widget.optics,
       light: widget.light,
+      sampleOutside: widget.sampleOutside,
       devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
       child: widget.child,
     );
@@ -146,6 +152,7 @@ class _LensBackdropFilter extends SingleChildRenderObjectWidget {
   final ui.ImageFilter baseFilter;
   final LensOptics optics;
   final Offset light;
+  final bool sampleOutside;
   final double devicePixelRatio;
 
   const _LensBackdropFilter({
@@ -156,6 +163,7 @@ class _LensBackdropFilter extends SingleChildRenderObjectWidget {
     required this.baseFilter,
     required this.optics,
     required this.light,
+    required this.sampleOutside,
     required this.devicePixelRatio,
   });
 
@@ -172,6 +180,7 @@ class _RenderLensBackdrop extends RenderProxyBox {
   late ui.ImageFilter _base;
   late LensOptics _optics;
   late Offset _light;
+  late bool _outside;
   late double _dpr;
 
   void update(_LensBackdropFilter w) {
@@ -180,6 +189,7 @@ class _RenderLensBackdrop extends RenderProxyBox {
     _base = w.baseFilter;
     _optics = w.optics;
     _light = w.light;
+    _outside = w.sampleOutside;
     _dpr = w.devicePixelRatio;
     markNeedsPaint();
   }
@@ -214,7 +224,7 @@ class _RenderLensBackdrop extends RenderProxyBox {
     f(rect.height);
     f(_radius * k);
     f((_optics.bezel * k).clamp(1.0, shortest / 2));
-    f(_optics.refraction * k);
+    f(_optics.refraction * k * (_outside ? 1 : -1));
     f(_optics.dispersion);
     f(_light.dx);
     f(_light.dy);

@@ -27,6 +27,9 @@ ui.ColorFilter _saturation(double s) {
 
 final ui.ColorFilter _vibrancy = _saturation(1.7);
 
+/// Kính trong (không mờ) chỉ tăng bão hoà nhẹ để màu nền xuyên qua vẫn tự nhiên.
+final ui.ColorFilter _clearVibrancy = _saturation(1.2);
+
 /// Lớp vật liệu Liquid Glass: làm mờ + tăng bão hoà phần nền phía sau,
 /// phủ một lớp kính trong, viền phản quang và bóng đổ mềm.
 class GlassSurface extends StatelessWidget {
@@ -65,7 +68,7 @@ class GlassSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final g = GlassTheme.of(context);
     final fill = tint ?? (thick ? g.thickTint : g.tint);
-    final top = fill.withValues(alpha: (fill.a + 0.14).clamp(0.0, 1.0));
+    final top = fill.withValues(alpha: (fill.a + 0.06).clamp(0.0, 1.0));
 
     Widget content = CustomPaint(
       foregroundPainter: _GlassRimPainter(borderRadius, g.rimHighlight, g.rimShade),
@@ -81,11 +84,15 @@ class GlassSurface extends StatelessWidget {
         outer: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma, tileMode: TileMode.mirror),
         inner: _vibrancy,
       );
-      // Có khúc xạ thì làm mờ nhẹ hơn để nền bị bẻ cong ở mép còn nhìn thấy.
+      // Có shader khúc xạ:
+      // - kính thường: TRONG như kính thật (không làm mờ) – nhìn rõ nền phía
+      //   sau và nền xung quanh bị bẻ cong vào mép;
+      // - kính dày (thanh điều hướng, ô nhập, sheet): vẫn làm mờ để dễ đọc chữ.
       content = GlassLens.available
           ? LensBackdrop(
               radius: borderRadius.topLeft.x,
-              baseFilter: frosted(g.blurSigma * 0.5),
+              baseFilter: thick ? frosted(g.blurSigma * 0.5) : _clearVibrancy,
+              sampleOutside: !thick,
               // Nền tối: viền phản chiếu dịu hơn để không bị loá.
               optics: Theme.of(context).brightness == Brightness.dark
                   ? optics.copyWith(specular: optics.specular * 0.55)
@@ -163,7 +170,7 @@ class _GlassRimPainter extends CustomPainter {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            highlight.withValues(alpha: highlight.a * 0.28),
+            highlight.withValues(alpha: highlight.a * 0.14),
             highlight.withValues(alpha: 0),
           ],
           stops: const [0, 0.55],
