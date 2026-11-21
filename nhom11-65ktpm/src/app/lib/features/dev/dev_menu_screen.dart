@@ -44,7 +44,6 @@ class _DevMenuScreenState extends ConsumerState<DevMenuScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final pad = MediaQuery.paddingOf(context);
     final user = ref.watch(currentUserProvider);
     final events = ref.watch(learningEventsProvider).value ?? const <LearningEvent>[];
     final summary = ProgressSummary.from(events);
@@ -69,98 +68,118 @@ class _DevMenuScreenState extends ConsumerState<DevMenuScreen> {
       appBar: const GlassAppBar(title: Text('Menu dev')),
       body: AbsorbPointer(
         absorbing: _busy,
-        child: ListView(
-          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-          padding: EdgeInsets.fromLTRB(16, pad.top + 12, 16, pad.bottom + 24),
-          children: [
-            section('Tài khoản', [
-              user.when(
-                data: (u) => Text(
-                  u == null ? 'Chưa đăng nhập' : '${u.shownName} · ${u.email} · ${u.xpTotal} XP',
-                  key: const Key('dev-user'),
-                ),
-                loading: () => const Text('Đang kiểm tra...'),
-                error: (e, _) => Text('Không gọi được server: $e', style: muted),
-              ),
-              const SizedBox(height: 4),
-              Text('Cần server chạy + `python -m scripts.seed_dev`. Mật khẩu: Demo12345', style: muted),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  GlassButton(label: 'demo@ (có tiến độ)', prominent: true, onPressed: () => _login('demo@chailish.dev')),
-                  GlassButton(label: 'new@ (mới tinh)', onPressed: () => _login('new@chailish.dev')),
-                  GlassButton(
-                    label: 'Đăng xuất',
-                    onPressed: () => _run('Đã đăng xuất', () async {
-                      await ref.read(authRepositoryProvider).logout();
-                      ref.invalidate(currentUserProvider);
-                    }),
+        // Builder: lấy MediaQuery bên trong Scaffold (đã cộng chiều cao thanh tiêu đề).
+        child: Builder(
+          builder: (context) {
+            final pad = MediaQuery.paddingOf(context);
+            return ListView(
+              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+              padding: EdgeInsets.fromLTRB(16, pad.top + 12, 16, pad.bottom + 24),
+              children: [
+                section('Tài khoản', [
+                  user.when(
+                    data: (u) => Text(
+                      u == null ? 'Chưa đăng nhập' : '${u.shownName} · ${u.email} · ${u.xpTotal} XP',
+                      key: const Key('dev-user'),
+                    ),
+                    loading: () => const Text('Đang kiểm tra...'),
+                    error: (e, _) => Text('Không gọi được server: $e', style: muted),
                   ),
-                ],
-              ),
-            ]),
-            section('Dữ liệu học tập trên máy', [
-              Text(
-                '${events.length} sự kiện · ${summary.xpTotal} XP · streak ${summary.currentStreak} ngày '
-                '(dài nhất ${summary.longestStreak}) · hôm nay ${summary.minutesOn(DateTime.now())} phút',
-                key: const Key('dev-progress'),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  GlassButton(
-                    key: const Key('dev-generate'),
-                    label: 'Tạo 30 ngày học giả',
-                    icon: Icons.auto_awesome,
-                    onPressed: () => _run('Đã tạo dữ liệu giả (chỉ trên máy)', () async {
-                      final lessons = await ref.read(lessonRepositoryProvider).lessons();
-                      await ref.read(progressServiceProvider).addAll(generateDemoEvents(lessons));
-                    }),
+                  const SizedBox(height: 4),
+                  Text('Cần server chạy + `python -m scripts.seed_dev`. Mật khẩu: Demo12345', style: muted),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      GlassButton(
+                        label: 'demo@ (có tiến độ)',
+                        prominent: true,
+                        onPressed: () => _login('demo@chailish.dev'),
+                      ),
+                      GlassButton(label: 'new@ (mới tinh)', onPressed: () => _login('new@chailish.dev')),
+                      GlassButton(
+                        label: 'Đăng xuất',
+                        onPressed: () => _run('Đã đăng xuất', () async {
+                          await ref.read(authRepositoryProvider).logout();
+                          ref.invalidate(currentUserProvider);
+                        }),
+                      ),
+                    ],
                   ),
-                  GlassButton(
-                    label: 'Kéo từ server',
-                    icon: Icons.cloud_download_outlined,
-                    onPressed: () => _run('Đã kéo sự kiện từ server', () async {
-                      await ref.read(progressServiceProvider).pullFromServer();
-                    }),
+                ]),
+                section('Dữ liệu học tập trên máy', [
+                  Text(
+                    '${events.length} sự kiện · ${summary.xpTotal} XP · streak ${summary.currentStreak} ngày '
+                    '(dài nhất ${summary.longestStreak}) · hôm nay ${summary.minutesOn(DateTime.now())} phút',
+                    key: const Key('dev-progress'),
                   ),
-                  GlassButton(
-                    label: 'Ghi 1 sự kiện thử',
-                    icon: Icons.add,
-                    onPressed: () => _run('Đã ghi (và gửi nếu đã đăng nhập)', () async {
-                      await ref.read(progressServiceProvider).record(
-                        LearningEvent(type: LearningEventType.studySession, xp: 1, durationSec: 60, refId: 'dev-menu'),
-                      );
-                    }),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      GlassButton(
+                        key: const Key('dev-generate'),
+                        label: 'Tạo 30 ngày học giả',
+                        icon: Icons.auto_awesome,
+                        onPressed: () => _run('Đã tạo dữ liệu giả (chỉ trên máy)', () async {
+                          final lessons = await ref.read(lessonRepositoryProvider).lessons();
+                          await ref.read(progressServiceProvider).addAll(generateDemoEvents(lessons));
+                        }),
+                      ),
+                      GlassButton(
+                        label: 'Kéo từ server',
+                        icon: Icons.cloud_download_outlined,
+                        onPressed: () => _run('Đã kéo sự kiện từ server', () async {
+                          await ref.read(progressServiceProvider).pullFromServer();
+                        }),
+                      ),
+                      GlassButton(
+                        label: 'Ghi 1 sự kiện thử',
+                        icon: Icons.add,
+                        onPressed: () => _run('Đã ghi (và gửi nếu đã đăng nhập)', () async {
+                          await ref
+                              .read(progressServiceProvider)
+                              .record(
+                                LearningEvent(
+                                  type: LearningEventType.studySession,
+                                  xp: 1,
+                                  durationSec: 60,
+                                  refId: 'dev-menu',
+                                ),
+                              );
+                        }),
+                      ),
+                      GlassButton(
+                        label: 'Xoá trên máy',
+                        icon: Icons.delete_outline,
+                        onPressed: () => _run('Đã xoá sự kiện trên máy', () async {
+                          ref.read(progressServiceProvider).clearLocal();
+                        }),
+                      ),
+                    ],
                   ),
-                  GlassButton(
-                    label: 'Xoá trên máy',
-                    icon: Icons.delete_outline,
-                    onPressed: () => _run('Đã xoá sự kiện trên máy', () async {
-                      ref.read(progressServiceProvider).clearLocal();
-                    }),
+                  const SizedBox(height: 8),
+                  StreamBuilder<int>(
+                    stream: ref.watch(outboxProvider).pendingChanges,
+                    builder: (context, snap) => Text('Outbox đang chờ gửi: ${snap.data ?? 0}', style: muted),
                   ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              StreamBuilder<int>(
-                stream: ref.watch(outboxProvider).pendingChanges,
-                builder: (context, snap) => Text('Outbox đang chờ gửi: ${snap.data ?? 0}', style: muted),
-              ),
-            ]),
-            section('Hợp đồng giữa các tính năng', [
-              Text(
-                AppConfig.fakeData ? 'Đang ép dùng bản giả (FAKE_DATA=true)' : 'Bản giả = chủ sở hữu chưa làm bản thật',
-                style: muted,
-              ),
-              const SizedBox(height: 8),
-              for (final c in contractEntries) _ContractRow(entry: c, isFake: ref.watch(c.provider) is FakeImplementation),
-            ]),
-          ],
+                ]),
+                section('Hợp đồng giữa các tính năng', [
+                  Text(
+                    AppConfig.fakeData
+                        ? 'Đang ép dùng bản giả (FAKE_DATA=true)'
+                        : 'Bản giả = chủ sở hữu chưa làm bản thật',
+                    style: muted,
+                  ),
+                  const SizedBox(height: 8),
+                  for (final c in contractEntries)
+                    _ContractRow(entry: c, isFake: ref.watch(c.provider) is FakeImplementation),
+                ]),
+              ],
+            );
+          },
         ),
       ),
     );
