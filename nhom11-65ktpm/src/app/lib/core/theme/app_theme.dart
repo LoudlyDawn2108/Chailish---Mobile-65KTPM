@@ -29,6 +29,8 @@ class AppTheme {
       seedColor: AppColors.primary,
       brightness: brightness,
       primary: isDark ? AppColors.primaryLight : AppColors.primary,
+      // Chữ trên nền clay: trắng ở light (clay đậm), than chì ở dark (clay sáng) – đủ tương phản.
+      onPrimary: isDark ? AppColors.slate : Colors.white,
       secondary: isDark ? AppColors.secondaryLight : AppColors.secondary,
       error: AppColors.errorRed,
       tertiary: AppColors.olive,
