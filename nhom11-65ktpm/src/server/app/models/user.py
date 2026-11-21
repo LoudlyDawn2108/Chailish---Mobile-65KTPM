@@ -63,3 +63,18 @@ class RefreshToken(CreatedAtMixin, Base):
     last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     user: Mapped[User] = relationship(back_populates="refresh_tokens")
+
+
+class PasswordResetOtp(CreatedAtMixin, Base):
+    """Mã OTP đặt lại mật khẩu gửi qua email (chỉ lưu HMAC của mã)."""
+
+    __tablename__ = "password_reset_otps"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    otp_hash: Mapped[str] = mapped_column(String(128))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

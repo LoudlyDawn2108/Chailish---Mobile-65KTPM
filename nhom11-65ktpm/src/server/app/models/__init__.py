@@ -6,7 +6,7 @@ from app.models.content import Character, Course, Lesson, Word
 from app.models.path import PathNode, PathStage, UserPathProgress
 from app.models.practice import DailyStat, SrsCard, Streak, WritingAttempt
 from app.models.pronunciation import Attempt, PronunciationRequest, SyllableResult
-from app.models.user import RefreshToken, User, UserStatus
+from app.models.user import PasswordResetOtp, RefreshToken, User, UserStatus
 
 __all__ = [
     "AiConversation",
@@ -19,6 +19,7 @@ __all__ = [
     "GrammarFeedback",
     "Lesson",
     "PathNode",
+    "PasswordResetOtp",
     "PathStage",
     "PronunciationRequest",
     "RefreshToken",
