@@ -126,6 +126,7 @@ flowchart TD
 | **Local Database** | `sqflite` | Lưu trữ dữ liệu cục bộ phục vụ Offline-First |
 | **Secure Storage** | `flutter_secure_storage` | Lưu trữ an toàn JWT Token và thông tin phiên |
 | **Audio & Speech** | `record`, `speech_to_text`, `flutter_tts` | Thu âm WAV, nhận dạng giọng nói zh-CN và Text-to-Speech |
+| **UI / Design System** | Material 3 Expressive + Liquid Glass (fragment shader, Impeller) | Bộ widget kính, theme sáng/tối, chuyển động lò xo dùng chung |
 | **Canvas Graphics** | `CustomPainter` | Vẽ lưới Hán tự và hiển thị vector Make Me a Hanzi |
 | **Charts** | `fl_chart` | Biểu đồ phút học và thống kê ngữ âm trực quan |
 | **Backend Server** | Python 3.11+, FastAPI, Pydantic v2 | Máy chủ API hiệu năng cao, tự sinh OpenAPI Swagger |
@@ -164,11 +165,16 @@ nhom11-65ktpm/
 ├── assets/                      # Hình ảnh, tài nguyên đồ họa của dự án
 │   └── media/
 │       └── image1.png
-├── docs/                        # Tài liệu báo cáo, slide thuyết trình, kịch bản demo
+├── docs/                        # Tài liệu hướng dẫn, báo cáo, slide thuyết trình
+│   ├── huong-dan-setup.md       # Cài đặt môi trường, chạy app/server, quy trình Git
+│   ├── huong-dan-thiet-ke-ui.md # Hướng dẫn thiết kế giao diện (design system)
+│   ├── api-tro-ly-ai.md         # Hợp đồng API Trợ lý AI
+│   └── trien-khai-docker.md     # Triển khai Docker Compose, HTTPS, CI
 └── src/                         # Toàn bộ mã nguồn dự án
     ├── app/                     # Mã nguồn ứng dụng di động Flutter
     │   ├── lib/
-    │   │   ├── core/            # Theme, routing, network client, utilities
+    │   │   ├── core/            # Theme, widget kính, chuyển động, routing, network client
+    │   ├── shaders/             # Fragment shader khúc xạ của vật liệu kính
     │   │   └── features/        # Các module chức năng theo từng thành viên
     │   │       ├── auth/
     │   │       ├── roadmap/
@@ -197,6 +203,8 @@ nhom11-65ktpm/
 ## 🚀 6. Hướng Dẫn Cài Đặt & Khởi Chạy
 
 > 📘 Hướng dẫn chi tiết từng bước (chạy trên điện thoại thật, tài khoản demo, lỗi hay gặp): **[docs/huong-dan-setup.md](docs/huong-dan-setup.md)**
+>
+> 🎨 Hướng dẫn thiết kế giao diện (màu, chữ, vật liệu kính, chuyển động, checklist UI): **[docs/huong-dan-thiet-ke-ui.md](docs/huong-dan-thiet-ke-ui.md)**
 
 ### 6.1. Yêu cầu môi trường tiền đề
 - **Flutter SDK:** Phiên bản `3.47.x` (Dart 3.13, kèm Android SDK Platform 37 / Android Studio)
