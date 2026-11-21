@@ -24,6 +24,7 @@ void main() {
     testWidgets('shows comparison, components and errors for a wrong sentence', (tester) async {
       final feedback = GrammarFeedback.fromJson(grammarJson(correct: false));
       await tester.pumpWidget(MaterialApp(home: Scaffold(body: GrammarAnalysisView(feedback: feedback))));
+      await tester.pumpAndSettle(); // chờ điểm số đếm lên xong
 
       expect(find.text('Cần chỉnh sửa'), findsOneWidget);
       expect(find.text('70'), findsOneWidget);
@@ -50,6 +51,7 @@ void main() {
     testWidgets('correct sentence shows no errors', (tester) async {
       final feedback = GrammarFeedback.fromJson(grammarJson(correct: true));
       await tester.pumpWidget(MaterialApp(home: Scaffold(body: GrammarAnalysisView(feedback: feedback))));
+      await tester.pumpAndSettle(); // chờ điểm số đếm lên xong
       expect(find.text('Câu chính xác'), findsOneWidget);
       await tester.scrollUntilVisible(find.text('Không có lỗi'), 200);
       expect(find.textContaining('đúng ngữ pháp'), findsOneWidget);

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/glass.dart';
 import '../../data/models/ai_chat_models.dart';
 import 'chat_bubbles.dart' show hanziFontFallback, scoreColor;
 
@@ -34,22 +36,59 @@ const componentColors = {
 
 /// Mở bảng phân tích ngữ pháp chi tiết của một câu trả lời.
 Future<void> showGrammarAnalysisSheet(BuildContext context, GrammarFeedback feedback) {
+  HapticFeedback.selectionClick();
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    showDragHandle: true,
     useSafeArea: true,
+    backgroundColor: Colors.transparent,
+    barrierColor: Colors.black.withValues(alpha: 0.25),
+    sheetAnimationStyle: const AnimationStyle(
+      duration: Duration(milliseconds: 520),
+      curve: AppMotion.emphasized,
+      reverseDuration: Duration(milliseconds: 260),
+    ),
     builder: (context) => DraggableScrollableSheet(
       expand: false,
       initialChildSize: 0.8,
       minChildSize: 0.4,
       maxChildSize: 0.95,
-      builder: (context, scrollController) => GrammarAnalysisView(
-        feedback: feedback,
-        scrollController: scrollController,
+      builder: (context, scrollController) => Padding(
+        padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+        child: GlassSurface(
+          thick: true,
+          borderRadius: BorderRadius.circular(34),
+          child: Column(
+            children: [
+              const _DragHandle(),
+              Expanded(
+                child: GrammarAnalysisView(feedback: feedback, scrollController: scrollController),
+              ),
+            ],
+          ),
+        ),
       ),
     ),
   );
+}
+
+class _DragHandle extends StatelessWidget {
+  const _DragHandle();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Container(
+        width: 40,
+        height: 5,
+        decoration: ShapeDecoration(
+          shape: const StadiumBorder(),
+          color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.35),
+        ),
+      ),
+    );
+  }
 }
 
 class GrammarAnalysisView extends StatelessWidget {
@@ -61,20 +100,23 @@ class GrammarAnalysisView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    var i = 0;
+    Widget enter(Widget child) => EntranceAnimation(index: i++, child: child);
     return ListView(
       controller: scrollController,
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
       children: [
         Text('Phân tích ngữ pháp', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
-        _ScoreHeader(feedback: feedback),
+        enter(_ScoreHeader(feedback: feedback)),
         const SizedBox(height: 20),
         _SectionTitle('So sánh câu', icon: Icons.compare_arrows),
-        _SentenceComparison(feedback: feedback),
+        enter(_SentenceComparison(feedback: feedback)),
         if (feedback.components.isNotEmpty) ...[
           const SizedBox(height: 20),
           _SectionTitle('Thành phần câu', icon: Icons.account_tree_outlined),
-          _ComponentBreakdown(components: feedback.components),
+          enter(_ComponentBreakdown(components: feedback.components)),
         ],
         const SizedBox(height: 20),
         _SectionTitle(
@@ -84,12 +126,12 @@ class GrammarAnalysisView extends StatelessWidget {
         if (feedback.errors.isEmpty)
           const Text('Câu của bạn đúng ngữ pháp. Tuyệt vời! 🎉')
         else
-          for (var i = 0; i < feedback.errors.length; i++)
-            _ErrorCard(key: Key('grammar-error-$i'), error: feedback.errors[i]),
+          for (var e = 0; e < feedback.errors.length; e++)
+            enter(_ErrorCard(key: Key('grammar-error-$e'), error: feedback.errors[e])),
         const SizedBox(height: 16),
         Text(
           'Phân tích do AI tạo ra và có thể chưa hoàn toàn chính xác.',
-          style: theme.textTheme.labelSmall?.copyWith(color: AppColors.textSecondaryLight),
+          style: theme.textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       ],
     );
@@ -125,6 +167,15 @@ class ScoreRing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: score),
+      duration: const Duration(milliseconds: 1100),
+      curve: AppMotion.springSmooth,
+      builder: (context, v, _) => _ring(v),
+    );
+  }
+
+  Widget _ring(double v) {
     final color = scoreColor(score.round());
     return SizedBox(
       width: size,
@@ -136,14 +187,17 @@ class ScoreRing extends StatelessWidget {
             width: size,
             height: size,
             child: CircularProgressIndicator(
-              value: (score / 100).clamp(0, 1),
+              value: (v / 100).clamp(0, 1),
               strokeWidth: size / 10,
+              strokeCap: StrokeCap.round,
               color: color,
               backgroundColor: color.withValues(alpha: 0.15),
             ),
           ),
           Text(
-            score.toStringAsFixed(score.truncateToDouble() == score ? 0 : 1),
+            (v - score).abs() < 0.05
+                ? score.toStringAsFixed(score.truncateToDouble() == score ? 0 : 1)
+                : v.clamp(0, 100).round().toString(),
             style: TextStyle(fontSize: size / 3.2, fontWeight: FontWeight.bold, color: color),
           ),
         ],
@@ -223,7 +277,11 @@ class _SentenceComparison extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const hanzi = TextStyle(fontSize: 22, fontFamilyFallback: hanziFontFallback, color: AppColors.textPrimaryLight);
+    final hanzi = TextStyle(
+      fontSize: 22,
+      fontFamilyFallback: hanziFontFallback,
+      color: Theme.of(context).colorScheme.onSurface,
+    );
     return Column(
       children: [
         _ComparisonRow(
@@ -247,7 +305,7 @@ class _SentenceComparison extends StatelessWidget {
               if ((feedback.correctedPinyin ?? '').isNotEmpty)
                 Text(
                   feedback.correctedPinyin!,
-                  style: const TextStyle(fontStyle: FontStyle.italic, color: AppColors.primaryDark),
+                  style: TextStyle(fontStyle: FontStyle.italic, color: Theme.of(context).colorScheme.primary),
                 ),
             ],
           ),
@@ -270,10 +328,12 @@ class _ComparisonRow extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(12),
-        border: Border(left: BorderSide(color: color, width: 4)),
+      decoration: ShapeDecoration(
+        color: color.withValues(alpha: 0.10),
+        shape: RoundedSuperellipseBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(color: color.withValues(alpha: 0.35)),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -309,17 +369,20 @@ class _ComponentBreakdown extends StatelessWidget {
           Container(
             key: Key('component-${c.role}-${c.text}'),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: (componentColors[c.role] ?? componentColors['other']!).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-              border: Border(
-                bottom: BorderSide(color: componentColors[c.role] ?? componentColors['other']!, width: 3),
+            decoration: ShapeDecoration(
+              color: (componentColors[c.role] ?? componentColors['other']!).withValues(alpha: 0.14),
+              shape: RoundedSuperellipseBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(
+                  color: (componentColors[c.role] ?? componentColors['other']!).withValues(alpha: 0.5),
+                  width: 1.5,
+                ),
               ),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(c.pinyin, style: const TextStyle(fontSize: 11, color: AppColors.textSecondaryLight)),
+                Text(c.pinyin, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                 Text(c.text, style: const TextStyle(fontSize: 20, fontFamilyFallback: hanziFontFallback)),
                 Text(
                   c.labelVi,
@@ -345,10 +408,11 @@ class _ErrorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const hanzi = TextStyle(fontSize: 18, fontFamilyFallback: hanziFontFallback);
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: GlassSurface(
+        shadow: false,
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -365,7 +429,7 @@ class _ErrorCard extends StatelessWidget {
                 if (error.grammarPointId != null)
                   Text(
                     'Điểm NP: ${error.grammarPointId}',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppColors.textSecondaryLight),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
               ],
             ),
@@ -381,7 +445,7 @@ class _ErrorCard extends StatelessWidget {
                     decoration: TextDecoration.lineThrough,
                   ),
                 ),
-                const Icon(Icons.arrow_forward, size: 18, color: AppColors.textSecondaryLight),
+                Icon(Icons.arrow_forward, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 Text(error.correction, style: hanzi.copyWith(color: AppColors.jadeGreen, fontWeight: FontWeight.w600)),
               ],
             ),

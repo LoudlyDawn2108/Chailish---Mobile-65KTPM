@@ -214,6 +214,13 @@ Mở Pull Request trên GitHub:
 | Nhận dữ liệu streaming | `ApiClient.postStream` + `parseSse` trong `lib/core/network/sse.dart`. |
 | Thay TTS/STT của màn chat AI bằng engine khác | Override `chatTtsProvider` / `chatSpeechInputProvider` trong `features/ai_chat/data/chat_voice_services.dart`. |
 | Hợp đồng API Trợ lý AI | [api-tro-ly-ai.md](api-tro-ly-ai.md). |
+| Khung màn hình đúng giao diện chung (nền loang + thanh tiêu đề kính) | `GlassScaffold` + `GlassAppBar` trong `lib/core/widgets/glass.dart`. Nội dung cuộn xuyên dưới thanh tiêu đề, nên chừa `MediaQuery.paddingOf(context).top` ở padding trên. |
+| Thẻ, nút, nút tròn bằng kính | `GlassCard`, `GlassButton` (`prominent: true` cho nút chính), `GlassIconButton`, `GlassSurface` (lớp kính trần). |
+| Icon nền hình "bánh quy" kiểu Material Expressive | `CookieIcon` trong `lib/core/widgets/expressive_shapes.dart`. |
+| Hiệu ứng chạm lò xo + rung nhẹ | Bọc widget bằng `Pressable` (`lib/core/motion/motion.dart`). Không dùng `InkWell`, theme đã tắt hiệu ứng gợn sóng. |
+| Phần tử xuất hiện lần lượt | `EntranceAnimation(index: i, child: ...)`. |
+| Đổi icon mượt (vd. mic ↔ stop) | `MorphSwitcher` với `Icon(key: ValueKey(...))`. |
+| Đường cong chuyển động chuẩn | `AppMotion.springBouncy`, `springSmooth`, `emphasized`. Màu chữ phụ lấy `colorScheme.onSurfaceVariant` thay vì màu cố định để chạy đúng ở chế độ tối. |
 
 ## 8. Lỗi hay gặp
 

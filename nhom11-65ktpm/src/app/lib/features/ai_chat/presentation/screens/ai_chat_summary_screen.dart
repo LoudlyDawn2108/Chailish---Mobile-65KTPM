@@ -1,8 +1,10 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/glass.dart';
 import '../../data/ai_chat_repository.dart';
 import '../../data/models/ai_chat_models.dart';
 import '../widgets/chat_bubbles.dart' show hanziFontFallback, scoreColor;
@@ -24,32 +26,47 @@ class AiChatSummaryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(finishedConversationProvider(conversationId));
-    return Scaffold(
-      appBar: AppBar(title: const Text('Tổng kết phiên ôn bài')),
-      body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.cloud_off_outlined, size: 48, color: AppColors.primary),
-                const SizedBox(height: 12),
-                Text(
-                  error is ApiException ? error.message : 'Không tải được tổng kết. Vui lòng thử lại.',
-                  textAlign: TextAlign.center,
+    return GlassScaffold(
+      appBar: const GlassAppBar(title: Text('Tổng kết phiên ôn bài')),
+      body: AnimatedSwitcher(
+        duration: AppMotion.medium,
+        child: async.when(
+          loading: () => const Center(key: Key('summary-loading'), child: CupertinoActivityIndicator(radius: 14)),
+          error: (error, _) => Center(
+            key: const Key('summary-error'),
+            child: Padding(
+              padding: const EdgeInsets.all(28),
+              child: EntranceAnimation(
+                child: GlassCard(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const CookieIcon(icon: Icons.cloud_off_outlined, color: AppColors.primary, size: 72),
+                      const SizedBox(height: 14),
+                      Text(
+                        error is ApiException ? error.message : 'Không tải được tổng kết. Vui lòng thử lại.',
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      GlassButton(
+                        label: 'Thử lại',
+                        icon: Icons.refresh,
+                        prominent: true,
+                        onPressed: () => ref.invalidate(finishedConversationProvider(conversationId)),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 12),
-                FilledButton(
-                  onPressed: () => ref.invalidate(finishedConversationProvider(conversationId)),
-                  child: const Text('Thử lại'),
-                ),
-              ],
+              ),
             ),
           ),
+          data: (conv) => _SummaryBody(
+            key: const Key('summary-body'),
+            conversation: conv,
+            onPracticeAgain: onPracticeAgain,
+          ),
         ),
-        data: (conv) => _SummaryBody(conversation: conv, onPracticeAgain: onPracticeAgain),
       ),
     );
   }
@@ -59,20 +76,24 @@ class _SummaryBody extends StatelessWidget {
   final AiConversation conversation;
   final VoidCallback? onPracticeAgain;
 
-  const _SummaryBody({required this.conversation, this.onPracticeAgain});
+  const _SummaryBody({super.key, required this.conversation, this.onPracticeAgain});
 
   @override
   Widget build(BuildContext context) {
     final summary = conversation.summary;
     final theme = Theme.of(context);
     final answers = conversation.messages.where((m) => !m.isAssistant).toList();
+    final pad = MediaQuery.paddingOf(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+    var i = 0;
+    Widget enter(Widget child) => EntranceAnimation(index: i++, child: child);
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      padding: EdgeInsets.fromLTRB(16, pad.top + 12, 16, pad.bottom + 24),
       children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
+        enter(GlassCard(
+            padding: const EdgeInsets.all(18),
             child: Row(
               children: [
                 ScoreRing(key: const Key('summary-score'), score: summary?.overallScore ?? 0, size: 88),
@@ -100,80 +121,111 @@ class _SummaryBody extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-        ),
+          )),
         if (summary != null && summary.errorCounts.isNotEmpty) ...[
           const SizedBox(height: 16),
           Text('Lỗi hay gặp', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          _ErrorCounts(counts: summary.errorCounts),
+          enter(GlassCard(child: _ErrorCounts(counts: summary.errorCounts))),
         ],
         if (summary != null && summary.topErrors.isNotEmpty) ...[
           const SizedBox(height: 16),
           Text('Các lỗi cần lưu ý', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          for (final e in summary.topErrors) _TopErrorTile(error: e),
+          for (final e in summary.topErrors) enter(_TopErrorTile(error: e)),
         ],
         if (summary != null && summary.grammarPointsToReview.isNotEmpty) ...[
           const SizedBox(height: 16),
           Text('Điểm ngữ pháp nên ôn lại', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          Wrap(
+          enter(Wrap(
             spacing: 8,
+            runSpacing: 8,
             children: [
               for (final gp in summary.grammarPointsToReview)
-                Chip(avatar: const Icon(Icons.menu_book_outlined, size: 18), label: Text(gp)),
+                GlassSurface(
+                  borderRadius: BorderRadius.circular(100),
+                  shadow: false,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(CupertinoIcons.book, size: 16, color: theme.colorScheme.primary),
+                      const SizedBox(width: 6),
+                      Text(gp, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
             ],
-          ),
+          )),
         ],
         const SizedBox(height: 16),
         Text('Lịch sử câu trả lời', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
         Text(
           'Đã lưu vào lịch sử ôn tập. Chạm vào một câu để xem phân tích chi tiết.',
-          style: theme.textTheme.bodySmall?.copyWith(color: AppColors.textSecondaryLight),
+          style: theme.textTheme.bodySmall?.copyWith(color: muted),
         ),
         const SizedBox(height: 8),
         if (answers.isEmpty) const Text('Bạn chưa trả lời câu nào trong phiên này.'),
         for (final m in answers)
-          Card(
-            margin: const EdgeInsets.only(bottom: 8),
-            child: ListTile(
+          enter(Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: GlassCard(
               key: Key('answer-${m.id}'),
-              title: Text(m.content, style: const TextStyle(fontSize: 18, fontFamilyFallback: hanziFontFallback)),
-              subtitle: m.grammarFeedback == null
-                  ? const Text('Chưa có phân tích')
-                  : Text(
-                      m.grammarFeedback!.isCorrect
-                          ? 'Chính xác'
-                          : 'Sửa: ${m.grammarFeedback!.correctedSentence ?? ''}',
+              padding: const EdgeInsets.fromLTRB(16, 12, 14, 12),
+              borderRadius: BorderRadius.circular(22),
+              onTap: m.grammarFeedback == null ? null : () => showGrammarAnalysisSheet(context, m.grammarFeedback!),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(m.content, style: const TextStyle(fontSize: 18, fontFamilyFallback: hanziFontFallback)),
+                        const SizedBox(height: 2),
+                        m.grammarFeedback == null
+                            ? Text('Chưa có phân tích', style: TextStyle(color: muted))
+                            : Text(
+                                m.grammarFeedback!.isCorrect
+                                    ? 'Chính xác'
+                                    : 'Sửa: ${m.grammarFeedback!.correctedSentence ?? ''}',
+                                style: TextStyle(color: muted),
+                              ),
+                      ],
                     ),
-              trailing: m.grammarFeedback == null
-                  ? null
-                  : Text(
+                  ),
+                  if (m.grammarFeedback != null) ...[
+                    Text(
                       '${m.grammarFeedback!.score}',
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
                         color: scoreColor(m.grammarFeedback!.score),
                       ),
                     ),
-              onTap: m.grammarFeedback == null
-                  ? null
-                  : () => showGrammarAnalysisSheet(context, m.grammarFeedback!),
+                    const SizedBox(width: 4),
+                    Icon(CupertinoIcons.chevron_forward, size: 16, color: muted),
+                  ],
+                ],
+              ),
             ),
-          ),
+          )),
         const SizedBox(height: 16),
-        if (onPracticeAgain != null)
-          OutlinedButton.icon(
+        if (onPracticeAgain != null) ...[
+          GlassButton(
+            label: 'Luyện thêm một phiên',
+            icon: Icons.replay,
+            expand: true,
             onPressed: onPracticeAgain,
-            icon: const Icon(Icons.replay),
-            label: const Text('Luyện thêm một phiên'),
           ),
-        const SizedBox(height: 8),
-        ElevatedButton(
+          const SizedBox(height: 10),
+        ],
+        GlassButton(
+          label: 'Hoàn thành',
+          prominent: true,
+          expand: true,
           onPressed: () => Navigator.of(context).maybePop(),
-          child: const Text('Hoàn thành'),
         ),
       ],
     );
@@ -191,7 +243,7 @@ class _Stat extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 16, color: AppColors.textSecondaryLight),
+        Icon(icon, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
         const SizedBox(width: 4),
         Text(label),
       ],
@@ -218,11 +270,16 @@ class _ErrorCounts extends StatelessWidget {
                 Expanded(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: entry.value / max,
-                      minHeight: 10,
-                      color: AppColors.warningOrange,
-                      backgroundColor: AppColors.dividerLight,
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: entry.value / max),
+                      duration: const Duration(milliseconds: 900),
+                      curve: AppMotion.springSmooth,
+                      builder: (context, v, _) => LinearProgressIndicator(
+                        value: v.clamp(0.0, 1.0),
+                        minHeight: 10,
+                        color: AppColors.warningOrange,
+                        backgroundColor: AppColors.warningOrange.withValues(alpha: 0.15),
+                      ),
                     ),
                   ),
                 ),
@@ -243,10 +300,11 @@ class _TopErrorTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const hanzi = TextStyle(fontSize: 16, fontFamilyFallback: hanziFontFallback);
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: GlassCard(
+        padding: const EdgeInsets.all(14),
+        borderRadius: BorderRadius.circular(22),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

@@ -1,8 +1,8 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
-
-/// Ba chấm nhấp nháy + "AI đang suy nghĩ..." khi chờ chữ đầu tiên của câu trả lời.
+/// Ba chấm nhảy sóng (kiểu iMessage) + "AI đang suy nghĩ..." khi chờ chữ đầu tiên.
 class TypingIndicator extends StatefulWidget {
   const TypingIndicator({super.key});
 
@@ -13,7 +13,7 @@ class TypingIndicator extends StatefulWidget {
 class _TypingIndicatorState extends State<TypingIndicator> with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1200),
+    duration: const Duration(milliseconds: 1100),
   )..repeat();
 
   @override
@@ -24,34 +24,42 @@ class _TypingIndicatorState extends State<TypingIndicator> with SingleTickerProv
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.fromLTRB(0, 8, 6, 10),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          for (var i = 0; i < 3; i++)
-            AnimatedBuilder(
-              animation: _controller,
-              builder: (context, _) {
-                final t = (_controller.value - i * 0.2) % 1.0;
-                final opacity = 0.3 + 0.7 * (t < 0.5 ? t * 2 : (1 - t) * 2);
-                return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: opacity),
-                    shape: BoxShape.circle,
-                  ),
-                );
-              },
+          AnimatedBuilder(
+            animation: _controller,
+            builder: (context, _) => Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (var i = 0; i < 3; i++)
+                  Builder(builder: (context) {
+                    final t = (_controller.value - i * 0.15) % 1.0;
+                    // Nửa đầu chu kỳ: nảy lên theo hình sin; nửa sau: nằm yên.
+                    final wave = t < 0.5 ? math.sin(t * 2 * math.pi) : 0.0;
+                    return Transform.translate(
+                      offset: Offset(0, -5 * wave),
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 2.5),
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: scheme.primary.withValues(alpha: 0.45 + 0.55 * wave),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    );
+                  }),
+              ],
             ),
-          const SizedBox(width: 8),
+          ),
+          const SizedBox(width: 10),
           Text(
             'AI đang suy nghĩ...',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondaryLight,
-                ),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
           ),
         ],
       ),

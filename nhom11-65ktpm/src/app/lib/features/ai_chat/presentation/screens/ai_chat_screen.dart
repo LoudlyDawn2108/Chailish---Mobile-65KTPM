@@ -1,7 +1,10 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/glass.dart';
 import '../../application/ai_chat_controller.dart';
 import '../../data/chat_voice_services.dart';
 import '../widgets/chat_bubbles.dart';
@@ -91,7 +94,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
     final controller = ref.read(aiChatControllerProvider.notifier);
     controller.markFinished();
     await Navigator.of(context).push(
-      MaterialPageRoute<void>(
+      CupertinoPageRoute<void>(
         builder: (context) => AiChatSummaryScreen(
           conversationId: conversationId,
           onPracticeAgain: () {
@@ -104,6 +107,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
   }
 
   Future<void> _confirmFinishEarly() async {
+    HapticFeedback.selectionClick();
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -118,11 +122,15 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
     if (ok == true) await _openSummary();
   }
 
+  /// Bong bóng có chỉ số < [_revealed] đã xuất hiện rồi → không chạy lại hiệu ứng khi cuộn.
+  int _revealed = 0;
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(aiChatControllerProvider);
     final controller = ref.read(aiChatControllerProvider.notifier);
     final tts = ref.read(chatTtsProvider);
+    final theme = Theme.of(context);
 
     ref.listen(aiChatControllerProvider, (prev, next) {
       if (prev?.bubbles.length != next.bubbles.length ||
@@ -134,102 +142,144 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
         if (next.failedInput != null && _input.text.isEmpty) {
           _input.text = next.failedInput!;
         }
+        HapticFeedback.heavyImpact();
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
         controller.clearError();
       }
     });
 
-    return Scaffold(
-      appBar: AppBar(
+    return GlassScaffold(
+      appBar: GlassAppBar(
         title: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             const Text('Ôn bài cùng AI'),
             if (widget.lessonTitle != null)
-              Text(widget.lessonTitle!, style: Theme.of(context).textTheme.labelMedium),
+              Text(
+                widget.lessonTitle!,
+                style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
           ],
         ),
         actions: [
-          if (state.phase == ChatPhase.ready && state.turnCount > 0)
-            IconButton(
-              key: const Key('finish-early'),
-              tooltip: 'Kết thúc & tổng kết',
-              icon: const Icon(Icons.flag_outlined),
-              onPressed: _confirmFinishEarly,
-            ),
+          AnimatedSwitcher(
+            duration: AppMotion.medium,
+            switchInCurve: AppMotion.springBouncy,
+            transitionBuilder: (child, a) => ScaleTransition(scale: a, child: child),
+            child: state.phase == ChatPhase.ready && state.turnCount > 0
+                ? GlassIconButton(
+                    key: const Key('finish-early'),
+                    tooltip: 'Kết thúc & tổng kết',
+                    icon: CupertinoIcons.flag,
+                    onPressed: _confirmFinishEarly,
+                  )
+                : const SizedBox.shrink(),
+          ),
         ],
         bottom: state.conversationId == null
             ? null
             : PreferredSize(
-                preferredSize: const Size.fromHeight(28),
+                preferredSize: const Size.fromHeight(30),
                 child: _TurnProgress(turnCount: state.turnCount, maxTurns: state.maxTurns),
               ),
       ),
-      body: switch (state.phase) {
-        ChatPhase.starting => const _CenteredStatus(
-            key: Key('chat-starting'),
-            icon: Icons.smart_toy_outlined,
-            message: 'Trợ lý AI đang chuẩn bị cuộc trò chuyện theo bài học...',
-            loading: true,
-          ),
-        ChatPhase.startFailed => _CenteredStatus(
-            key: const Key('chat-start-failed'),
-            icon: Icons.cloud_off_outlined,
-            message: state.errorMessage ?? 'Không bắt đầu được phiên trò chuyện.',
-            actionLabel: 'Thử lại',
-            onAction: controller.retryStart,
-          ),
-        _ => Column(
-            children: [
-              if (state.disclaimer.isNotEmpty) _Disclaimer(text: state.disclaimer),
-              Expanded(
-                child: ListView.separated(
-                  key: const Key('chat-list'),
-                  controller: _scroll,
-                  padding: const EdgeInsets.all(12),
-                  itemCount: state.bubbles.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final bubble = state.bubbles[index];
-                    if (bubble.isAssistant) {
-                      return AssistantBubble(
-                        bubble: bubble,
-                        showTranslation: state.revealedTranslations.contains(bubble.id),
-                        onToggleTranslation: () => controller.toggleTranslation(bubble.id),
-                        onSpeak: () => tts.speak(bubble.text),
-                        onSpeakSlow: () => tts.speak(bubble.text, slow: true),
-                      );
-                    }
-                    return UserBubble(
-                      bubble: bubble,
-                      onOpenGrammar: bubble.grammar == null
-                          ? null
-                          : () => showGrammarAnalysisSheet(context, bubble.grammar!),
-                    );
-                  },
-                ),
-              ),
-              if (state.phase == ChatPhase.finished)
-                _FinishedBanner(onViewSummary: _openSummary)
-              else ...[
-                SuggestedRepliesBar(
-                  suggestions: state.suggestions,
-                  onSelected: (s) {
-                    _input.text = s.hanzi;
-                    _input.selection = TextSelection.collapsed(offset: s.hanzi.length);
-                    _usedVoice = false;
-                  },
-                ),
-                ChatInputBar(
-                  controller: _input,
-                  enabled: state.canSend,
-                  isListening: _listening,
-                  onSend: _send,
-                  onMicPressed: _toggleMic,
-                ),
-              ],
-            ],
-          ),
-      },
+      body: AnimatedSwitcher(
+        duration: AppMotion.medium,
+        switchInCurve: AppMotion.emphasized,
+        child: switch (state.phase) {
+          ChatPhase.starting => const _CenteredStatus(
+              key: Key('chat-starting'),
+              icon: Icons.smart_toy_outlined,
+              message: 'Trợ lý AI đang chuẩn bị cuộc trò chuyện theo bài học...',
+              loading: true,
+            ),
+          ChatPhase.startFailed => _CenteredStatus(
+              key: const Key('chat-start-failed'),
+              icon: Icons.cloud_off_outlined,
+              message: state.errorMessage ?? 'Không bắt đầu được phiên trò chuyện.',
+              actionLabel: 'Thử lại',
+              onAction: controller.retryStart,
+            ),
+          _ => Builder(
+              key: const Key('chat-body'),
+              builder: (context) {
+                final top = MediaQuery.paddingOf(context).top;
+                final offset = state.disclaimer.isNotEmpty ? 1 : 0;
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (state.bubbles.length > _revealed) _revealed = state.bubbles.length;
+                });
+                return Column(
+                  children: [
+                    Expanded(
+                      child: ListView.separated(
+                        key: const Key('chat-list'),
+                        controller: _scroll,
+                        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                        padding: EdgeInsets.fromLTRB(12, top + 10, 12, 12),
+                        itemCount: state.bubbles.length + offset,
+                        separatorBuilder: (_, _) => const SizedBox(height: 14),
+                        itemBuilder: (context, i) {
+                          if (offset == 1 && i == 0) return _Disclaimer(text: state.disclaimer);
+                          final index = i - offset;
+                          final bubble = state.bubbles[index];
+                          final child = bubble.isAssistant
+                              ? AssistantBubble(
+                                  bubble: bubble,
+                                  showTranslation: state.revealedTranslations.contains(bubble.id),
+                                  onToggleTranslation: () => controller.toggleTranslation(bubble.id),
+                                  onSpeak: () => tts.speak(bubble.text),
+                                  onSpeakSlow: () => tts.speak(bubble.text, slow: true),
+                                )
+                              : UserBubble(
+                                  bubble: bubble,
+                                  onOpenGrammar: bubble.grammar == null
+                                      ? null
+                                      : () => showGrammarAnalysisSheet(context, bubble.grammar!),
+                                );
+                          return EntranceAnimation(
+                            enabled: index >= _revealed,
+                            offset: const Offset(0, 24),
+                            fromScale: 0.85,
+                            scaleAlignment: bubble.isAssistant ? Alignment.bottomLeft : Alignment.bottomRight,
+                            child: child,
+                          );
+                        },
+                      ),
+                    ),
+                    AnimatedSize(
+                      duration: AppMotion.medium,
+                      curve: AppMotion.springSmooth,
+                      alignment: Alignment.bottomCenter,
+                      child: state.phase == ChatPhase.finished
+                          ? _FinishedBanner(onViewSummary: _openSummary)
+                          : Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SuggestedRepliesBar(
+                                  suggestions: state.suggestions,
+                                  onSelected: (s) {
+                                    _input.text = s.hanzi;
+                                    _input.selection = TextSelection.collapsed(offset: s.hanzi.length);
+                                    _usedVoice = false;
+                                  },
+                                ),
+                                ChatInputBar(
+                                  controller: _input,
+                                  enabled: state.canSend,
+                                  isListening: _listening,
+                                  onSend: _send,
+                                  onMicPressed: _toggleMic,
+                                ),
+                              ],
+                            ),
+                    ),
+                  ],
+                );
+              },
+            ),
+        },
+      ),
     );
   }
 }
@@ -242,20 +292,36 @@ class _TurnProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
       child: Row(
         children: [
-          Text('Lượt $turnCount/$maxTurns', style: Theme.of(context).textTheme.labelMedium),
+          AnimatedSwitcher(
+            duration: AppMotion.short,
+            transitionBuilder: (child, a) => FadeTransition(
+              opacity: a,
+              child: SlideTransition(
+                position: a.drive(Tween(begin: const Offset(0, 0.6), end: Offset.zero)),
+                child: child,
+              ),
+            ),
+            child: Text(
+              'Lượt $turnCount/$maxTurns',
+              key: ValueKey(turnCount),
+              style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700),
+            ),
+          ),
           const SizedBox(width: 12),
           Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: maxTurns == 0 ? 0 : turnCount / maxTurns,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(end: maxTurns == 0 ? 0 : turnCount / maxTurns),
+              duration: AppMotion.long,
+              curve: AppMotion.springSmooth,
+              builder: (context, v, _) => LinearProgressIndicator(
+                value: v.clamp(0.0, 1.0),
                 minHeight: 6,
-                color: AppColors.primary,
-                backgroundColor: AppColors.dividerLight,
+                borderRadius: BorderRadius.circular(6),
               ),
             ),
           ),
@@ -272,16 +338,26 @@ class _Disclaimer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      color: AppColors.secondaryLight.withValues(alpha: 0.18),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Row(
-        children: [
-          const Icon(Icons.info_outline, size: 16, color: AppColors.secondaryDark),
-          const SizedBox(width: 8),
-          Expanded(child: Text(text, style: Theme.of(context).textTheme.labelSmall)),
-        ],
+    final theme = Theme.of(context);
+    return Center(
+      child: GlassSurface(
+        borderRadius: BorderRadius.circular(100),
+        shadow: false,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(CupertinoIcons.info_circle, size: 15, color: theme.colorScheme.onSurfaceVariant),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                text,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -296,27 +372,33 @@ class _FinishedBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       top: false,
-      child: Container(
-        key: const Key('chat-finished'),
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        color: AppColors.jadeGreen.withValues(alpha: 0.1),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Bạn đã hoàn thành phiên trò chuyện! 🎉',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.jadeGreen),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+        child: EntranceAnimation(
+          key: const Key('chat-finished'),
+          offset: const Offset(0, 40),
+          child: GlassCard(
+            thick: true,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Bạn đã hoàn thành phiên trò chuyện! 🎉',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.jadeGreen),
+                ),
+                const SizedBox(height: 12),
+                GlassButton(
+                  key: const Key('view-summary'),
+                  label: 'Xem tổng kết',
+                  icon: Icons.insights_outlined,
+                  prominent: true,
+                  expand: true,
+                  onPressed: onViewSummary,
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            ElevatedButton.icon(
-              key: const Key('view-summary'),
-              onPressed: onViewSummary,
-              icon: const Icon(Icons.insights_outlined),
-              label: const Text('Xem tổng kết'),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -343,22 +425,27 @@ class _CenteredStatus extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 56, color: AppColors.primary),
-            const SizedBox(height: 16),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            if (loading) const CircularProgressIndicator(),
-            if (actionLabel != null)
-              FilledButton.icon(
-                onPressed: onAction,
-                icon: const Icon(Icons.refresh),
-                label: Text(actionLabel!),
-              ),
-          ],
+        padding: const EdgeInsets.all(28),
+        child: EntranceAnimation(
+          child: GlassCard(
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CookieIcon(icon: icon, color: AppColors.primary, size: 80, lobes: 10),
+                const SizedBox(height: 18),
+                Text(message, textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyLarge),
+                if (loading) ...[
+                  const SizedBox(height: 18),
+                  const CupertinoActivityIndicator(radius: 12),
+                ],
+                if (actionLabel != null) ...[
+                  const SizedBox(height: 18),
+                  GlassButton(label: actionLabel!, icon: Icons.refresh, prominent: true, onPressed: onAction),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );
