@@ -68,7 +68,7 @@ class GlassSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final g = GlassTheme.of(context);
     final fill = tint ?? (thick ? g.thickTint : g.tint);
-    final top = fill.withValues(alpha: (fill.a + 0.06).clamp(0.0, 1.0));
+    final top = fill.withValues(alpha: (fill.a + 0.03).clamp(0.0, 1.0));
 
     Widget content = CustomPaint(
       foregroundPainter: _GlassRimPainter(borderRadius, g.rimHighlight, g.rimShade),
@@ -173,7 +173,7 @@ class _GlassRimPainter extends CustomPainter {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            highlight.withValues(alpha: highlight.a * 0.14),
+            highlight.withValues(alpha: highlight.a * 0.08),
             highlight.withValues(alpha: 0),
           ],
           stops: const [0, 0.55],

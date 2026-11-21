@@ -37,8 +37,8 @@ class GlassTheme extends ThemeExtension<GlassTheme> {
   });
 
   static const light = GlassTheme(
-    tint: Color(0x1FFFFFFF),
-    thickTint: Color(0x8CFAF9F5),
+    tint: Color(0x0AFFFFFF),
+    thickTint: Color(0x6BFAF9F5),
     rimHighlight: Color(0xE6FFFFFF),
     rimShade: Color(0x33E3DACC),
     blurSigma: 22,
@@ -56,8 +56,8 @@ class GlassTheme extends ThemeExtension<GlassTheme> {
   );
 
   static const dark = GlassTheme(
-    tint: Color(0x1A3A3936),
-    thickTint: Color(0x80262624),
+    tint: Color(0x0A3A3936),
+    thickTint: Color(0x66262624),
     rimHighlight: Color(0x4DFAF9F5),
     rimShade: Color(0x0FFAF9F5),
     blurSigma: 26,
