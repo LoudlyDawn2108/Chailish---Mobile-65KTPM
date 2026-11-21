@@ -204,6 +204,8 @@ Mở Pull Request trên GitHub:
 
 ## 7. Những thứ đã có sẵn để dùng lại
 
+> Làm màn hình mới thì đọc trước **[huong-dan-thiet-ke-ui.md](huong-dan-thiet-ke-ui.md)** (màu, chữ, bo góc, vật liệu kính, chuyển động, checklist trước khi mở PR).
+
 | Cần làm | Dùng cái gì |
 |:--|:--|
 | API yêu cầu đăng nhập | `CurrentUser` và `DbSession` trong `app/api/deps.py`. |
@@ -216,6 +218,8 @@ Mở Pull Request trên GitHub:
 | Hợp đồng API Trợ lý AI | [api-tro-ly-ai.md](api-tro-ly-ai.md). |
 | Khung màn hình đúng giao diện chung (nền loang + thanh tiêu đề kính) | `GlassScaffold` + `GlassAppBar` trong `lib/core/widgets/glass.dart`. Nội dung cuộn xuyên dưới thanh tiêu đề, nên chừa `MediaQuery.paddingOf(context).top` ở padding trên. |
 | Thẻ, nút, nút tròn bằng kính | `GlassCard`, `GlassButton` (`prominent: true` cho nút chính), `GlassIconButton`, `GlassSurface` (lớp kính trần). |
+| Kính dày có làm mờ (thanh dưới, ô nhập, chữ trên nền sặc sỡ) | `GlassSurface(thick: true)` hoặc `GlassCard(thick: true)`. |
+| Màn hình tạm cho tính năng chưa làm | `ComingSoonView` trong `lib/core/widgets/glass.dart`. |
 | Icon nền hình "bánh quy" kiểu Material Expressive | `CookieIcon` trong `lib/core/widgets/expressive_shapes.dart`. |
 | Hiệu ứng chạm lò xo + rung nhẹ | Bọc widget bằng `Pressable` (`lib/core/motion/motion.dart`). Không dùng `InkWell`, theme đã tắt hiệu ứng gợn sóng. |
 | Phần tử xuất hiện lần lượt | `EntranceAnimation(index: i, child: ...)`. |
@@ -233,4 +237,6 @@ Mở Pull Request trên GitHub:
 | `/api/health` báo database lỗi | Container chưa chạy: `docker compose up -d db`, rồi chạy lại `alembic upgrade head`. |
 | `alembic upgrade head` lỗi `Can't locate revision` | Pull code mới nhất. Nếu database dev đã hỏng, xóa sạch bằng `docker compose down -v` rồi tạo lại (mất toàn bộ dữ liệu dev). |
 | Trợ lý AI báo chưa cấu hình | Điền `ANTHROPIC_API_KEY` hoặc `OPENAI_API_KEY` vào `.env` rồi khởi động lại uvicorn. |
+| Kính trông như kính mờ thường, không thấy mép bẻ cong nền | Bình thường trên máy ảo dùng Skia, web và `flutter test`: shader khúc xạ chỉ chạy trên Impeller. Xem trên điện thoại thật. |
+| Đã sửa shader/theme nhưng mở lại app vẫn thấy giao diện cũ | Hot reload chỉ áp dụng trong phiên `flutter run`. Chạy lại `flutter run` để cài bản mới lên máy. |
 | `gh pr create` mở PR sang repo gốc | Thêm `-R LoudlyDawn2108/project-ptuddd` hoặc chạy `gh repo set-default`. |
