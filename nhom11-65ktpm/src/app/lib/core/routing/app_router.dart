@@ -43,7 +43,11 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: AppConstants.aiChatRoute,
-      builder: (context, state) => const AiChatScreen(),
+      // /ai-chat?lessonId=1&title=Chào hỏi
+      builder: (context, state) => AiChatScreen(
+        lessonId: int.tryParse(state.uri.queryParameters['lessonId'] ?? '') ?? 1,
+        lessonTitle: state.uri.queryParameters['title'],
+      ),
     ),
     GoRoute(
       path: AppConstants.statisticsRoute,
