@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'core/widgets/glass_lens.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(
-    const ProviderScope(
-      child: ChaiLishApp(),
-    ),
-  );
+  await GlassLens.init();
+  runApp(const ProviderScope(child: ChaiLishApp()));
 }
 
 class ChaiLishApp extends StatelessWidget {

@@ -7,9 +7,11 @@ import '../motion/motion.dart';
 import '../theme/app_theme.dart';
 import '../theme/glass_theme.dart';
 import 'expressive_shapes.dart';
+import 'glass_lens.dart';
 
 export '../motion/motion.dart';
 export 'expressive_shapes.dart';
+export 'glass_lens.dart' show GlassLens, LensOptics;
 
 /// Ma trận tăng bão hoà màu nền phía sau kính (hiệu ứng "vibrancy" của iOS).
 ui.ColorFilter _saturation(double s) {
@@ -43,6 +45,9 @@ class GlassSurface extends StatelessWidget {
   final double shadowScale;
   final bool blur;
 
+  /// Thông số khúc xạ mép kính (chỉ có tác dụng khi shader khả dụng).
+  final LensOptics optics;
+
   const GlassSurface({
     super.key,
     required this.child,
@@ -53,6 +58,7 @@ class GlassSurface extends StatelessWidget {
     this.shadow = true,
     this.shadowScale = 1,
     this.blur = true,
+    this.optics = const LensOptics(),
   });
 
   @override
@@ -71,13 +77,22 @@ class GlassSurface extends StatelessWidget {
       ),
     );
     if (blur) {
-      content = BackdropFilter(
-        filter: ui.ImageFilter.compose(
-          outer: ui.ImageFilter.blur(sigmaX: g.blurSigma, sigmaY: g.blurSigma, tileMode: TileMode.mirror),
-          inner: _vibrancy,
-        ),
-        child: content,
+      ui.ImageFilter frosted(double sigma) => ui.ImageFilter.compose(
+        outer: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma, tileMode: TileMode.mirror),
+        inner: _vibrancy,
       );
+      // Có khúc xạ thì làm mờ nhẹ hơn để nền bị bẻ cong ở mép còn nhìn thấy.
+      content = GlassLens.available
+          ? LensBackdrop(
+              radius: borderRadius.topLeft.x,
+              baseFilter: frosted(g.blurSigma * 0.5),
+              // Nền tối: viền phản chiếu dịu hơn để không bị loá.
+              optics: Theme.of(context).brightness == Brightness.dark
+                  ? optics.copyWith(specular: optics.specular * 0.55)
+                  : optics,
+              child: content,
+            )
+          : BackdropFilter(filter: frosted(g.blurSigma), child: content);
     }
     content = ClipRSuperellipse(borderRadius: borderRadius, child: content);
     if (shadow) {
@@ -139,6 +154,21 @@ class _GlassRimPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Ánh bóng mặt kính: dải sáng mềm ở nửa trên, như mặt cong hắt sáng trời.
+    final full = Offset.zero & size;
+    canvas.drawRect(
+      full,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            highlight.withValues(alpha: highlight.a * 0.28),
+            highlight.withValues(alpha: 0),
+          ],
+          stops: const [0, 0.55],
+        ).createShader(full),
+    );
     final rect = (Offset.zero & size).deflate(0.6);
     final paint = Paint()
       ..style = PaintingStyle.stroke
@@ -198,7 +228,7 @@ class _BlobPainter extends CustomPainter {
         center,
         radius,
         Paint()
-          ..shader = RadialGradient(colors: [blobs[i].withValues(alpha: 0.55), blobs[i].withValues(alpha: 0)])
+          ..shader = RadialGradient(colors: [blobs[i].withValues(alpha: 0.85), blobs[i].withValues(alpha: 0)])
               .createShader(Rect.fromCircle(center: center, radius: radius)),
       );
     }
