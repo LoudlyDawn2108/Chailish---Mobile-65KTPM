@@ -178,7 +178,7 @@ class UserBubble extends StatelessWidget {
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFFEF5350), Color(0xFFC62828)],
+                  colors: AppColors.clayGradient,
                 ),
                 shadows: [
                   BoxShadow(

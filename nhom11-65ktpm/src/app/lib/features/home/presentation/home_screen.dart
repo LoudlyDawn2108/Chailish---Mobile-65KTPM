@@ -17,11 +17,11 @@ class _Feature {
 }
 
 const _features = [
-  _Feature('Bản Đồ Lộ Trình', 'HSK 1 - HSK 2', Icons.map_outlined, Color(0xFF1E88E5), AppConstants.roadmapRoute),
-  _Feature('Chấm Phát Âm AI', 'Thanh điệu & Pinyin', Icons.mic_none_outlined, Color(0xFFE53935),
+  _Feature('Bản Đồ Lộ Trình', 'HSK 1 - HSK 2', Icons.map_outlined, AppColors.sky, AppConstants.roadmapRoute),
+  _Feature('Chấm Phát Âm AI', 'Thanh điệu & Pinyin', Icons.mic_none_outlined, AppColors.fig,
       AppConstants.pronunciationRoute),
-  _Feature('Luyện Viết Hán Tự', 'Thứ tự nét chuẩn', Icons.brush_outlined, Color(0xFF8E24AA), AppConstants.writingRoute),
-  _Feature('Flashcard SM-2', 'Ôn tập ngắt quãng', Icons.style_outlined, Color(0xFFFF8F00), AppConstants.flashcardRoute),
+  _Feature('Luyện Viết Hán Tự', 'Thứ tự nét chuẩn', Icons.brush_outlined, AppColors.heather, AppConstants.writingRoute),
+  _Feature('Flashcard SM-2', 'Ôn tập ngắt quãng', Icons.style_outlined, AppColors.secondaryDark, AppConstants.flashcardRoute),
 ];
 
 class HomeScreen extends StatefulWidget {
@@ -128,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onTap: () => context.push(AppConstants.statisticsRoute),
                   child: Row(
                     children: [
-                      const CookieIcon(icon: Icons.insights_outlined, color: Color(0xFF3949AB), lobes: 6),
+                      const CookieIcon(icon: Icons.insights_outlined, color: AppColors.cactus, lobes: 6),
                       const SizedBox(width: 14),
                       Expanded(
                         child: Column(
@@ -171,11 +171,11 @@ class _StreakHero extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFE53935), Color(0xFFB71C1C)],
+          colors: AppColors.clayGradient,
         ),
         shadows: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.22),
+            color: AppColors.clayDeep.withValues(alpha: 0.24),
             blurRadius: 32,
             spreadRadius: -8,
             offset: const Offset(0, 14),
@@ -205,7 +205,7 @@ class _StreakHero extends StatelessWidget {
                       children: [
                         const Text(
                           'Xin chào, Học viên!',
-                          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800),
+                          style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w600, fontFamily: 'serif', fontFamilyFallback: ['Noto Serif', 'Georgia']),
                         ),
                         const SizedBox(height: 4),
                         const Text(
@@ -226,7 +226,7 @@ class _StreakHero extends StatelessWidget {
                                 duration: const Duration(milliseconds: 1100),
                                 curve: Curves.elasticOut,
                                 builder: (context, s, child) => Transform.scale(scale: s, child: child),
-                                child: const Icon(Icons.local_fire_department, color: Colors.amber, size: 22),
+                                child: const Icon(Icons.local_fire_department, color: AppColors.manilla, size: 22),
                               ),
                               const SizedBox(width: 6),
                               TweenAnimationBuilder<int>(
@@ -297,7 +297,7 @@ class _FeaturedAiCard extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       child: Row(
         children: [
-          const CookieIcon(icon: Icons.smart_toy_outlined, color: Color(0xFF00897B), size: 60, lobes: 12),
+          const CookieIcon(icon: Icons.smart_toy_outlined, color: AppColors.clay, size: 60, lobes: 12),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -314,12 +314,12 @@ class _FeaturedAiCard extends StatelessWidget {
           ),
           GlassSurface(
             borderRadius: BorderRadius.circular(100),
-            tint: theme.colorScheme.primary.withValues(alpha: 0.9),
+            tint: AppColors.clayDeep.withValues(alpha: 0.92),
             shadow: false,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             child: Text(
               'Bắt đầu',
-              style: TextStyle(color: theme.colorScheme.onPrimary, fontWeight: FontWeight.w700),
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
             ),
           ),
         ],

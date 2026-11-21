@@ -23,15 +23,15 @@ const grammarErrorLabels = {
 
 /// Màu cho từng thành phần câu để người học nhận ra cấu trúc.
 const componentColors = {
-  'subject': Color(0xFF1565C0), // chủ ngữ - xanh dương
-  'predicate': Color(0xFFD32F2F), // vị ngữ - đỏ
-  'object': Color(0xFF2E7D32), // tân ngữ - xanh lá
-  'adverbial': Color(0xFF6A1B9A), // trạng ngữ - tím
-  'attributive': Color(0xFF00838F), // định ngữ
-  'complement': Color(0xFFEF6C00), // bổ ngữ
-  'measure_word': Color(0xFFAD1457), // lượng từ
-  'particle': Color(0xFF5D4037), // trợ từ
-  'other': Color(0xFF616161),
+  'subject': Color(0xFF4F7FB0), // chủ ngữ - xanh dương
+  'predicate': Color(0xFFC15F3C), // vị ngữ - đỏ
+  'object': Color(0xFF6B7F4F), // tân ngữ - xanh lá
+  'adverbial': Color(0xFF7A6BA8), // trạng ngữ - tím
+  'attributive': Color(0xFF4F8577), // định ngữ
+  'complement': Color(0xFFB88347), // bổ ngữ
+  'measure_word': Color(0xFFB0567A), // lượng từ
+  'particle': Color(0xFF7A5C48), // trợ từ
+  'other': Color(0xFF87867F),
 };
 
 /// Mở bảng phân tích ngữ pháp chi tiết của một câu trả lời.

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass.dart';
 
 class WritingScreen extends StatelessWidget {
@@ -11,7 +12,7 @@ class WritingScreen extends StatelessWidget {
       appBar: GlassAppBar(title: Text('Luyện Viết Hán Tự')),
       body: ComingSoonView(
         icon: Icons.brush_outlined,
-        color: Color(0xFF8E24AA),
+        color: AppColors.heather,
         title: 'Khung Ô Chữ & Kiểm Tra Thứ Tự Nét',
         message: 'Đang phát triển theo phân công Issue #26 của Đệ',
       ),
