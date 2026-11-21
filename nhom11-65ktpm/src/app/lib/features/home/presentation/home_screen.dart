@@ -18,10 +18,21 @@ class _Feature {
 
 const _features = [
   _Feature('Bản Đồ Lộ Trình', 'HSK 1 - HSK 2', Icons.map_outlined, AppColors.sky, AppConstants.roadmapRoute),
-  _Feature('Chấm Phát Âm AI', 'Thanh điệu & Pinyin', Icons.mic_none_outlined, AppColors.fig,
-      AppConstants.pronunciationRoute),
+  _Feature(
+    'Chấm Phát Âm AI',
+    'Thanh điệu & Pinyin',
+    Icons.mic_none_outlined,
+    AppColors.fig,
+    AppConstants.pronunciationRoute,
+  ),
   _Feature('Luyện Viết Hán Tự', 'Thứ tự nét chuẩn', Icons.brush_outlined, AppColors.heather, AppConstants.writingRoute),
-  _Feature('Flashcard SM-2', 'Ôn tập ngắt quãng', Icons.style_outlined, AppColors.secondaryDark, AppConstants.flashcardRoute),
+  _Feature(
+    'Flashcard SM-2',
+    'Ôn tập ngắt quãng',
+    Icons.style_outlined,
+    AppColors.secondaryDark,
+    AppConstants.flashcardRoute,
+  ),
 ];
 
 class HomeScreen extends StatefulWidget {
@@ -95,15 +106,9 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 20),
               const EntranceAnimation(index: 1, child: _StreakHero(streakDays: 3, goalProgress: 0.6)),
               const SizedBox(height: 28),
-              EntranceAnimation(
-                index: 2,
-                child: Text('Tính Năng Cốt Lõi', style: theme.textTheme.titleLarge),
-              ),
+              EntranceAnimation(index: 2, child: Text('Tính Năng Cốt Lõi', style: theme.textTheme.titleLarge)),
               const SizedBox(height: 12),
-              EntranceAnimation(
-                index: 3,
-                child: _FeaturedAiCard(onTap: () => context.push(AppConstants.aiChatRoute)),
-              ),
+              EntranceAnimation(index: 3, child: _FeaturedAiCard(onTap: () => context.push(AppConstants.aiChatRoute))),
               const SizedBox(height: 12),
               GridView.count(
                 crossAxisCount: 2,
@@ -165,15 +170,12 @@ class _StreakHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Bóng vẽ bằng RRect (Impeller vẽ bóng superellipse bị lỗi khối vuông),
+    // phần nền gradient vẫn giữ hình squircle.
     return DecoratedBox(
-      decoration: ShapeDecoration(
-        shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(32)),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: AppColors.clayGradient,
-        ),
-        shadows: [
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
           BoxShadow(
             color: AppColors.clayDeep.withValues(alpha: 0.24),
             blurRadius: 32,
@@ -182,100 +184,116 @@ class _StreakHero extends StatelessWidget {
           ),
         ],
       ),
-      child: ClipRSuperellipse(
-        borderRadius: BorderRadius.circular(32),
-        child: Stack(
-          children: [
-            // Chữ Hán trang trí mờ phía sau
-            const Positioned(
-              right: -12,
-              bottom: -34,
-              child: Text(
-                '学',
-                style: TextStyle(fontSize: 150, color: Color(0x1FFFFFFF), fontWeight: FontWeight.w900),
+      child: DecoratedBox(
+        decoration: ShapeDecoration(
+          shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(32)),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: AppColors.clayGradient,
+          ),
+        ),
+        child: ClipRSuperellipse(
+          borderRadius: BorderRadius.circular(32),
+          child: Stack(
+            children: [
+              // Chữ Hán trang trí mờ phía sau
+              const Positioned(
+                right: -12,
+                bottom: -34,
+                child: Text(
+                  '学',
+                  style: TextStyle(fontSize: 150, color: Color(0x1FFFFFFF), fontWeight: FontWeight.w900),
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Xin chào, Học viên!',
-                          style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w600, fontFamily: 'serif', fontFamilyFallback: ['Noto Serif', 'Georgia']),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Mục tiêu: 15 phút học mỗi ngày',
-                          style: TextStyle(color: Colors.white70, fontSize: 13),
-                        ),
-                        const SizedBox(height: 16),
-                        GlassSurface(
-                          borderRadius: BorderRadius.circular(100),
-                          tint: const Color(0x33FFFFFF),
-                          shadow: false,
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              TweenAnimationBuilder<double>(
-                                tween: Tween(begin: 0.3, end: 1),
-                                duration: const Duration(milliseconds: 1100),
-                                curve: Curves.elasticOut,
-                                builder: (context, s, child) => Transform.scale(scale: s, child: child),
-                                child: const Icon(Icons.local_fire_department, color: AppColors.manilla, size: 22),
-                              ),
-                              const SizedBox(width: 6),
-                              TweenAnimationBuilder<int>(
-                                tween: IntTween(begin: 0, end: streakDays),
-                                duration: const Duration(milliseconds: 700),
-                                curve: Curves.easeOutCubic,
-                                builder: (context, v, _) => Text(
-                                  '$v ngày liên tiếp',
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 0, end: goalProgress),
-                    duration: const Duration(milliseconds: 1200),
-                    curve: AppMotion.springSmooth,
-                    builder: (context, v, _) => SizedBox.square(
-                      dimension: 76,
-                      child: Stack(
-                        alignment: Alignment.center,
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SizedBox.square(
-                            dimension: 76,
-                            child: CircularProgressIndicator(
-                              value: v.clamp(0.0, 1.0),
-                              strokeWidth: 9,
-                              strokeCap: StrokeCap.round,
+                          const Text(
+                            'Xin chào, Học viên!',
+                            style: TextStyle(
                               color: Colors.white,
-                              backgroundColor: Colors.white24,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'serif',
+                              fontFamilyFallback: ['Noto Serif', 'Georgia'],
                             ),
                           ),
-                          Text(
-                            '${(v * 15).round()}′',
-                            style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Mục tiêu: 15 phút học mỗi ngày',
+                            style: TextStyle(color: Colors.white70, fontSize: 13),
+                          ),
+                          const SizedBox(height: 16),
+                          GlassSurface(
+                            borderRadius: BorderRadius.circular(100),
+                            tint: const Color(0x33FFFFFF),
+                            shadow: false,
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                TweenAnimationBuilder<double>(
+                                  tween: Tween(begin: 0.3, end: 1),
+                                  duration: const Duration(milliseconds: 1100),
+                                  curve: Curves.elasticOut,
+                                  builder: (context, s, child) => Transform.scale(scale: s, child: child),
+                                  child: const Icon(Icons.local_fire_department, color: AppColors.manilla, size: 22),
+                                ),
+                                const SizedBox(width: 6),
+                                TweenAnimationBuilder<int>(
+                                  tween: IntTween(begin: 0, end: streakDays),
+                                  duration: const Duration(milliseconds: 700),
+                                  curve: Curves.easeOutCubic,
+                                  builder: (context, v, _) => Text(
+                                    '$v ngày liên tiếp',
+                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: goalProgress),
+                      duration: const Duration(milliseconds: 1200),
+                      curve: AppMotion.springSmooth,
+                      builder: (context, v, _) => SizedBox.square(
+                        dimension: 76,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            SizedBox.square(
+                              dimension: 76,
+                              child: CircularProgressIndicator(
+                                value: v.clamp(0.0, 1.0),
+                                strokeWidth: 9,
+                                strokeCap: StrokeCap.round,
+                                color: Colors.white,
+                                backgroundColor: Colors.white24,
+                              ),
+                            ),
+                            Text(
+                              '${(v * 15).round()}′',
+                              style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -345,10 +363,7 @@ class _FeatureCard extends StatelessWidget {
           const Spacer(),
           Text(feature.title, style: theme.textTheme.titleSmall?.copyWith(fontSize: 15)),
           const SizedBox(height: 2),
-          Text(
-            feature.subtitle,
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-          ),
+          Text(feature.subtitle, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
         ],
       ),
     );

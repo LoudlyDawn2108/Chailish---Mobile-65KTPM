@@ -71,7 +71,10 @@ class AssistantBubble extends StatelessWidget {
                                   text: bubble.text,
                                   children: [
                                     if (bubble.isStreaming)
-                                      TextSpan(text: ' ▍', style: TextStyle(color: theme.colorScheme.primary)),
+                                      TextSpan(
+                                        text: ' ▍',
+                                        style: TextStyle(color: theme.colorScheme.primary),
+                                      ),
                                   ],
                                 ),
                                 key: Key('ai-hanzi-${bubble.id}'),
@@ -172,42 +175,49 @@ class UserBubble extends StatelessWidget {
         children: [
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
+            // Bóng vẽ bằng RRect (Impeller vẽ bóng superellipse bị lỗi khối vuông).
             child: DecoratedBox(
-              decoration: ShapeDecoration(
-                shape: const RoundedSuperellipseBorder(borderRadius: radius),
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: AppColors.clayGradient,
-                ),
-                shadows: [
+              decoration: BoxDecoration(
+                borderRadius: radius,
+                boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.28),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
+                    color: AppColors.primary.withValues(alpha: 0.22),
+                    blurRadius: 14,
+                    spreadRadius: -2,
+                    offset: const Offset(0, 5),
                   ),
                 ],
               ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (bubble.inputMethod == 'voice') ...[
-                      const Icon(CupertinoIcons.waveform, size: 16, color: Colors.white70),
-                      const SizedBox(width: 6),
-                    ],
-                    Flexible(
-                      child: Text(
-                        bubble.text,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontFamilyFallback: hanziFontFallback,
+              child: DecoratedBox(
+                decoration: const ShapeDecoration(
+                  shape: RoundedSuperellipseBorder(borderRadius: radius),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: AppColors.clayGradient,
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (bubble.inputMethod == 'voice') ...[
+                        const Icon(CupertinoIcons.waveform, size: 16, color: Colors.white70),
+                        const SizedBox(width: 6),
+                      ],
+                      Flexible(
+                        child: Text(
+                          bubble.text,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontFamilyFallback: hanziFontFallback,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -273,10 +283,16 @@ class GrammarChip extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(g.isCorrect ? CupertinoIcons.checkmark_seal_fill : CupertinoIcons.exclamationmark_circle_fill,
-                    size: 17, color: color),
+                Icon(
+                  g.isCorrect ? CupertinoIcons.checkmark_seal_fill : CupertinoIcons.exclamationmark_circle_fill,
+                  size: 17,
+                  color: color,
+                ),
                 const SizedBox(width: 5),
-                Text(label, style: style?.copyWith(color: color, fontWeight: FontWeight.w700)),
+                Text(
+                  label,
+                  style: style?.copyWith(color: color, fontWeight: FontWeight.w700),
+                ),
                 if (onTap != null) ...[
                   const SizedBox(width: 2),
                   Icon(CupertinoIcons.chevron_forward, size: 13, color: color),

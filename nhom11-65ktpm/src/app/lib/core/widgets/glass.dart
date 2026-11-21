@@ -38,6 +38,9 @@ class GlassSurface extends StatelessWidget {
   /// Dùng lớp kính dày hơn – cho thanh điều hướng, ô nhập, bottom sheet.
   final bool thick;
   final bool shadow;
+
+  /// Độ nổi của bóng (1 = mặc định). Nút nhỏ dùng < 1 để bóng gọn, không loang.
+  final double shadowScale;
   final bool blur;
 
   const GlassSurface({
@@ -48,6 +51,7 @@ class GlassSurface extends StatelessWidget {
     this.tint,
     this.thick = false,
     this.shadow = true,
+    this.shadowScale = 1,
     this.blur = true,
   });
 
@@ -61,11 +65,7 @@ class GlassSurface extends StatelessWidget {
       foregroundPainter: _GlassRimPainter(borderRadius, g.rimHighlight, g.rimShade),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [top, fill],
-          ),
+          gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [top, fill]),
         ),
         child: padding == null ? child : Padding(padding: padding!, child: child),
       ),
@@ -81,16 +81,51 @@ class GlassSurface extends StatelessWidget {
     }
     content = ClipRSuperellipse(borderRadius: borderRadius, child: content);
     if (shadow) {
-      content = DecoratedBox(
-        decoration: ShapeDecoration(
-          shape: RoundedSuperellipseBorder(borderRadius: borderRadius),
-          shadows: g.shadows,
-        ),
-        child: content,
-      );
+      content = CustomPaint(painter: _OuterShadowPainter(borderRadius, g.shadows, shadowScale), child: content);
     }
     return content;
   }
+}
+
+/// Bóng đổ chỉ vẽ ở PHÍA NGOÀI hình kính.
+///
+/// - Dùng RRect thay cho superellipse: Impeller trên Android vẽ bóng
+///   `RoundedSuperellipseBorder` thành khối chữ nhật nhoè (lỗi ở các nút tròn).
+/// - Cắt bỏ phần bên trong: kính trong suốt nên nếu không cắt, bóng phía
+///   sau sẽ lộ qua làm lòng nút bị tối/bẩn.
+class _OuterShadowPainter extends CustomPainter {
+  final BorderRadius radius;
+  final List<BoxShadow> shadows;
+  final double scale;
+
+  _OuterShadowPainter(this.radius, this.shadows, this.scale);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (scale <= 0) return;
+    final shape = radius.toRRect(Offset.zero & size);
+    canvas.save();
+    canvas.clipPath(
+      Path.combine(
+        PathOperation.difference,
+        Path()..addRect((Offset.zero & size).inflate(200)),
+        Path()..addRRect(shape),
+      ),
+    );
+    for (final s in shadows) {
+      final scaled = BoxShadow(
+        color: s.color.withValues(alpha: (s.color.a * scale.clamp(0.0, 1.0))),
+        blurRadius: s.blurRadius * scale,
+        spreadRadius: s.spreadRadius * scale,
+        offset: s.offset * scale,
+      );
+      canvas.drawRRect(shape.shift(scaled.offset).inflate(scaled.spreadRadius), scaled.toPaint());
+    }
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_OuterShadowPainter old) => old.radius != radius || old.shadows != shadows || old.scale != scale;
 }
 
 /// Viền kính: sáng ở góc trên-trái, mờ dần ở giữa, ánh nhẹ ở góc dưới-phải
@@ -111,15 +146,19 @@ class _GlassRimPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [highlight, shade, shade, highlight.withValues(alpha: highlight.a * 0.6)],
+        colors: [
+          highlight,
+          shade,
+          shade,
+          highlight.withValues(alpha: highlight.a * 0.6),
+        ],
         stops: const [0, 0.35, 0.7, 1],
       ).createShader(rect);
     canvas.drawPath(RoundedSuperellipseBorder(borderRadius: radius).getOuterPath(rect), paint);
   }
 
   @override
-  bool shouldRepaint(_GlassRimPainter old) =>
-      old.radius != radius || old.highlight != highlight || old.shade != shade;
+  bool shouldRepaint(_GlassRimPainter old) => old.radius != radius || old.highlight != highlight || old.shade != shade;
 }
 
 /// Nền loang màu phía sau lớp kính, để kính có gì đó để "khúc xạ".
@@ -130,10 +169,7 @@ class LiquidBackground extends StatelessWidget {
   Widget build(BuildContext context) {
     final g = GlassTheme.of(context);
     return RepaintBoundary(
-      child: CustomPaint(
-        painter: _BlobPainter(g.backdropBase, g.backdropBlobs),
-        child: const SizedBox.expand(),
-      ),
+      child: CustomPaint(painter: _BlobPainter(g.backdropBase, g.backdropBlobs), child: const SizedBox.expand()),
     );
   }
 }
@@ -162,9 +198,8 @@ class _BlobPainter extends CustomPainter {
         center,
         radius,
         Paint()
-          ..shader = RadialGradient(
-            colors: [blobs[i].withValues(alpha: 0.55), blobs[i].withValues(alpha: 0)],
-          ).createShader(Rect.fromCircle(center: center, radius: radius)),
+          ..shader = RadialGradient(colors: [blobs[i].withValues(alpha: 0.55), blobs[i].withValues(alpha: 0)])
+              .createShader(Rect.fromCircle(center: center, radius: radius)),
       );
     }
   }
@@ -216,13 +251,7 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
   /// Độ hiện của lớp kính nền (0 = trong suốt như iOS khi chưa cuộn).
   final double backgroundOpacity;
 
-  const GlassAppBar({
-    super.key,
-    this.title,
-    this.actions = const [],
-    this.bottom,
-    this.backgroundOpacity = 1,
-  });
+  const GlassAppBar({super.key, this.title, this.actions = const [], this.bottom, this.backgroundOpacity = 1});
 
   @override
   Size get preferredSize => Size.fromHeight(kToolbarHeight + (bottom?.preferredSize.height ?? 0));
@@ -250,24 +279,29 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
         const SizedBox(width: 8),
       ],
       bottom: bottom,
-      flexibleSpace: _fade(ClipRect(
-        child: BackdropFilter(
-          filter: ui.ImageFilter.compose(
-            outer: ui.ImageFilter.blur(sigmaX: g.blurSigma, sigmaY: g.blurSigma, tileMode: TileMode.mirror),
-            inner: _vibrancy,
-          ),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [g.thickTint, g.tint.withValues(alpha: g.tint.a * 0.6)],
+      flexibleSpace: _fade(
+        ClipRect(
+          child: BackdropFilter(
+            filter: ui.ImageFilter.compose(
+              outer: ui.ImageFilter.blur(sigmaX: g.blurSigma, sigmaY: g.blurSigma, tileMode: TileMode.mirror),
+              inner: _vibrancy,
+            ),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    g.thickTint,
+                    g.tint.withValues(alpha: g.tint.a * 0.6),
+                  ],
+                ),
+                border: Border(bottom: BorderSide(color: g.rimHighlight.withValues(alpha: 0.5), width: 0.5)),
               ),
-              border: Border(bottom: BorderSide(color: g.rimHighlight.withValues(alpha: 0.5), width: 0.5)),
             ),
           ),
         ),
-      )),
+      ),
     );
   }
 
@@ -311,6 +345,7 @@ class GlassIconButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(size / 2),
           tint: tint,
           shadow: enabled,
+          shadowScale: 0.45,
           child: SizedBox.square(
             dimension: size,
             child: Center(
@@ -404,13 +439,7 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final surface = GlassSurface(
-      borderRadius: borderRadius,
-      padding: padding,
-      tint: tint,
-      thick: thick,
-      child: child,
-    );
+    final surface = GlassSurface(borderRadius: borderRadius, padding: padding, tint: tint, thick: thick, child: child);
     if (onTap == null) return surface;
     return Pressable(onTap: onTap, pressedScale: 0.96, child: surface);
   }
