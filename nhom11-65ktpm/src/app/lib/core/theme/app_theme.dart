@@ -9,6 +9,11 @@ import 'glass_theme.dart';
 class AppTheme {
   static const _fontFallback = ['Noto Sans SC', 'Roboto', 'PingFang SC'];
 
+  /// Tiêu đề dùng chữ có chân (serif) mềm mại kiểu biên tập – đặc trưng
+  /// của phong cách Anthropic; thân chữ vẫn là sans để dễ đọc.
+  static const _serif = 'serif';
+  static const _serifFallback = ['Noto Serif', 'Noto Serif SC', 'Georgia', 'Times New Roman', 'serif'];
+
   /// Bo góc chuẩn (squircle liên tục kiểu iOS).
   static const double radiusSmall = 14;
   static const double radiusMedium = 22;
@@ -26,6 +31,13 @@ class AppTheme {
       primary: isDark ? AppColors.primaryLight : AppColors.primary,
       secondary: isDark ? AppColors.secondaryLight : AppColors.secondary,
       error: AppColors.errorRed,
+      tertiary: AppColors.olive,
+      surface: isDark ? AppColors.backgroundDark : AppColors.ivory,
+      onSurface: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+      onSurfaceVariant: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+      outline: isDark ? const Color(0xFF6B6A64) : AppColors.cloud,
+      outlineVariant: isDark ? AppColors.dividerDark : AppColors.dividerLight,
+      surfaceContainerHighest: isDark ? AppColors.slateLight : AppColors.pampas,
     );
 
     final base = ThemeData(
@@ -36,16 +48,18 @@ class AppTheme {
     );
 
     // Chữ kiểu Expressive: tiêu đề rất đậm, tracking âm nhẹ như SF Pro Display.
+    TextStyle? serif(TextStyle? s, FontWeight w, double tracking) =>
+        s?.copyWith(fontFamily: _serif, fontFamilyFallback: _serifFallback, fontWeight: w, letterSpacing: tracking);
     final text = base.textTheme.copyWith(
-      displaySmall: base.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -1),
-      headlineLarge: base.textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.8),
-      headlineMedium: base.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.6),
-      headlineSmall: base.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: -0.4),
-      titleLarge: base.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700, letterSpacing: -0.3),
+      displaySmall: serif(base.textTheme.displaySmall, FontWeight.w600, -0.8),
+      headlineLarge: serif(base.textTheme.headlineLarge, FontWeight.w600, -0.6),
+      headlineMedium: serif(base.textTheme.headlineMedium, FontWeight.w600, -0.4),
+      headlineSmall: serif(base.textTheme.headlineSmall, FontWeight.w600, -0.3),
+      titleLarge: serif(base.textTheme.titleLarge, FontWeight.w600, -0.2),
       titleMedium: base.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
       titleSmall: base.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
       labelLarge: base.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
-    );
+    ).apply(bodyColor: scheme.onSurface, displayColor: scheme.onSurface);
 
     const pill = StadiumBorder();
     final buttonPadding = const EdgeInsets.symmetric(horizontal: 24, vertical: 14);
@@ -155,8 +169,8 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: isDark ? const Color(0xF22C2C2E) : const Color(0xF21C1C1E),
-        contentTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+        backgroundColor: isDark ? const Color(0xF23D3D3A) : const Color(0xF2141413),
+        contentTextStyle: const TextStyle(color: AppColors.ivory, fontWeight: FontWeight.w500),
         shape: RoundedSuperellipseBorder(borderRadius: BorderRadius.circular(radiusMedium)),
         elevation: 0,
       ),
@@ -168,7 +182,7 @@ class AppTheme {
       ),
       tooltipTheme: TooltipThemeData(
         decoration: ShapeDecoration(
-          color: isDark ? const Color(0xF23A3A3C) : const Color(0xF21C1C1E),
+          color: isDark ? const Color(0xF23D3D3A) : const Color(0xF2141413),
           shape: const StadiumBorder(),
         ),
         textStyle: const TextStyle(color: Colors.white, fontSize: 13),
