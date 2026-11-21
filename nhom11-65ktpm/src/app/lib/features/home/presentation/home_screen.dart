@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -71,6 +72,13 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundOpacity: _collapse,
         title: Opacity(opacity: _collapse, child: const Text('ChaiLish')),
         actions: [
+          // Menu dev: đăng nhập demo, dữ liệu giả, trạng thái hợp đồng (không có ở bản release).
+          if (kDebugMode)
+            GlassIconButton(
+              icon: CupertinoIcons.wrench,
+              tooltip: 'Menu dev',
+              onPressed: () => context.push(AppConstants.devMenuRoute),
+            ),
           GlassIconButton(icon: CupertinoIcons.bell, tooltip: 'Thông báo', onPressed: () {}),
           GlassIconButton(
             icon: CupertinoIcons.person_crop_circle,

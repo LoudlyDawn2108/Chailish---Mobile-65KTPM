@@ -205,6 +205,8 @@ Mở Pull Request trên GitHub:
 ## 7. Những thứ đã có sẵn để dùng lại
 
 > Làm màn hình mới thì đọc trước **[huong-dan-thiet-ke-ui.md](huong-dan-thiet-ke-ui.md)** (màu, chữ, bo góc, vật liệu kính, chuyển động, checklist trước khi mở PR).
+>
+> Cần dữ liệu của tính năng khác (bài học, chấm phát âm, nét chữ, XP/streak...)? Dùng hợp đồng trong `lib/core/contracts/` (có sẵn bản giả). Xem **[lam-viec-song-song.md](lam-viec-song-song.md)** và **[hop-dong-du-lieu.md](hop-dong-du-lieu.md)**. Menu dev: nút cờ lê trên trang chủ (bản debug).
 
 | Cần làm | Dùng cái gì |
 |:--|:--|
