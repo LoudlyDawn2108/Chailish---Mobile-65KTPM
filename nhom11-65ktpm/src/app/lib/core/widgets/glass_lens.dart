@@ -41,7 +41,7 @@ class LensOptics {
   /// Độ sáng viền phản chiếu.
   final double specular;
 
-  const LensOptics({this.bezel = 24, this.refraction = 18, this.dispersion = 0.6, this.specular = 0.55});
+  const LensOptics({this.bezel = 24, this.refraction = 11, this.dispersion = 0.3, this.specular = 0.55});
 
   LensOptics copyWith({double? bezel, double? refraction, double? dispersion, double? specular}) => LensOptics(
     bezel: bezel ?? this.bezel,
