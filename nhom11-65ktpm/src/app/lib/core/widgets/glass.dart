@@ -68,28 +68,16 @@ class GlassSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final g = GlassTheme.of(context);
     final fill = tint ?? (thick ? g.thickTint : g.tint);
-    // Kính trong (tint trong suốt hoàn toàn): không phủ màu, không dải ánh
-    // bóng – chỉ còn khúc xạ + viền phản chiếu.
-    final clear = fill.a == 0;
-    final body = padding == null ? child : Padding(padding: padding!, child: child);
+    final top = fill.withValues(alpha: (fill.a + 0.03).clamp(0.0, 1.0));
 
     Widget content = CustomPaint(
-      foregroundPainter: _GlassRimPainter(borderRadius, g.rimHighlight, g.rimShade, sheen: !clear),
-      child: clear
-          ? body
-          : DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    fill.withValues(alpha: (fill.a + 0.03).clamp(0.0, 1.0)),
-                    fill,
-                  ],
-                ),
-              ),
-              child: body,
-            ),
+      foregroundPainter: _GlassRimPainter(borderRadius, g.rimHighlight, g.rimShade),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [top, fill]),
+        ),
+        child: padding == null ? child : Padding(padding: padding!, child: child),
+      ),
     );
     if (blur) {
       ui.ImageFilter frosted(double sigma) => ui.ImageFilter.compose(
@@ -172,29 +160,25 @@ class _GlassRimPainter extends CustomPainter {
   final Color highlight;
   final Color shade;
 
-  final bool sheen;
-
-  _GlassRimPainter(this.radius, this.highlight, this.shade, {this.sheen = true});
+  _GlassRimPainter(this.radius, this.highlight, this.shade);
 
   @override
   void paint(Canvas canvas, Size size) {
     // Ánh bóng mặt kính: dải sáng mềm ở nửa trên, như mặt cong hắt sáng trời.
     final full = Offset.zero & size;
-    if (sheen) {
-      canvas.drawRect(
-        full,
-        Paint()
-          ..shader = LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              highlight.withValues(alpha: highlight.a * 0.08),
-              highlight.withValues(alpha: 0),
-            ],
-            stops: const [0, 0.55],
-          ).createShader(full),
-      );
-    }
+    canvas.drawRect(
+      full,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            highlight.withValues(alpha: highlight.a * 0.08),
+            highlight.withValues(alpha: 0),
+          ],
+          stops: const [0, 0.55],
+        ).createShader(full),
+    );
     final rect = (Offset.zero & size).deflate(0.6);
     final paint = Paint()
       ..style = PaintingStyle.stroke
@@ -214,8 +198,7 @@ class _GlassRimPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_GlassRimPainter old) =>
-      old.radius != radius || old.highlight != highlight || old.shade != shade || old.sheen != sheen;
+  bool shouldRepaint(_GlassRimPainter old) => old.radius != radius || old.highlight != highlight || old.shade != shade;
 }
 
 /// Nền loang màu phía sau lớp kính, để kính có gì đó để "khúc xạ".
