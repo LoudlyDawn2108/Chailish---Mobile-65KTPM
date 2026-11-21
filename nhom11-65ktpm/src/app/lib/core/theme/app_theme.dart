@@ -25,6 +25,8 @@ class AppTheme {
   static ThemeData _build(Brightness brightness) {
     final isDark = brightness == Brightness.dark;
     final glass = isDark ? GlassTheme.dark : GlassTheme.light;
+    // Widget Material không làm mờ nền nên cần nền kính đặc hơn kính thật.
+    final solidGlass = Color.lerp(glass.tint, glass.thickTint, 0.5)!;
     final scheme = ColorScheme.fromSeed(
       seedColor: AppColors.primary,
       brightness: brightness,
@@ -94,7 +96,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         elevation: 0,
         margin: EdgeInsets.zero,
-        color: glass.tint,
+        color: solidGlass,
         shape: RoundedSuperellipseBorder(
           borderRadius: BorderRadius.circular(radiusMedium),
           side: BorderSide(color: glass.rimHighlight.withValues(alpha: 0.5)),
@@ -125,7 +127,7 @@ class AppTheme {
           padding: buttonPadding,
           shape: pill,
           textStyle: buttonText,
-          backgroundColor: glass.tint,
+          backgroundColor: solidGlass,
           side: BorderSide(color: glass.rimHighlight),
         ),
       ),
@@ -134,12 +136,12 @@ class AppTheme {
       ),
       chipTheme: base.chipTheme.copyWith(
         shape: const StadiumBorder(),
-        backgroundColor: glass.tint,
+        backgroundColor: solidGlass,
         side: BorderSide(color: glass.rimHighlight.withValues(alpha: 0.6)),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: glass.tint,
+        fillColor: solidGlass,
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMedium),
