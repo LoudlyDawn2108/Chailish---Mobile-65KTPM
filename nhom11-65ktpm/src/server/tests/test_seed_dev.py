@@ -1,7 +1,8 @@
 from sqlalchemy import func, select
 
 from app.models.content import Lesson
-from app.models.practice import SrsCard
+from app.models.practice import SrsCard, Streak
+from app.models.progress import LearningEvent
 from app.models.user import User
 from scripts.seed_dev import DEMO_USERS, seed_content, seed_path, seed_users
 
@@ -30,3 +31,14 @@ def test_seed_reset_recreates_learning_data(db_session):
     _seed(db_session)
     _seed(db_session, reset=True)
     assert db_session.scalar(select(func.count()).select_from(SrsCard)) == 14
+
+
+def test_seed_generates_30_days_of_events_once(db_session):
+    _seed(db_session)
+    count = db_session.scalar(select(func.count()).select_from(LearningEvent))
+    _seed(db_session)
+    assert count > 100
+    assert db_session.scalar(select(func.count()).select_from(LearningEvent)) == count
+    demo = db_session.scalar(select(User).where(User.email == "demo@chailish.dev"))
+    assert demo.xp_total > 0
+    assert db_session.get(Streak, demo.id).current_streak >= 5

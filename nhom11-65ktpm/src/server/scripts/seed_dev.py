@@ -5,11 +5,12 @@
     python -m scripts.seed_dev --reset    # xóa tài khoản demo rồi tạo lại dữ liệu học tập từ đầu
 
 Dữ liệu tạo ra:
-- Khóa HSK1 với 3 bài: bài 1 đọc từ `data/lessons/hsk1/lesson-01.json`, bài 2 và 3
-  định nghĩa ngay trong file này. Bài nào cũng có điểm ngữ pháp và kịch bản cho Trợ lý AI.
+- Khóa HSK1 với các bài mẫu đọc từ `data/lessons/hsk1/lesson-*.json` (hiện 3 bài).
+  Bài nào cũng có điểm ngữ pháp và kịch bản cho Trợ lý AI.
 - Lộ trình: chặng "HSK 1 - Khởi động" gồm 3 bài và bài kiểm tra cuối chặng.
-- Tài khoản demo (xem DEMO_USERS) kèm tiến độ lộ trình, thẻ flashcard đến hạn hôm nay,
-  thống kê 7 ngày gần nhất và chuỗi ngày học.
+- Tài khoản demo (xem DEMO_USERS) kèm tiến độ lộ trình, thẻ flashcard đến hạn hôm nay
+  và 30 ngày sự kiện học tập giả (`learning_events`), từ đó tự tính thống kê ngày,
+  streak và XP như dữ liệu thật.
 
 Đây KHÔNG phải script nạp nội dung chính thức (issue #18). Khi script đó xong, nội dung
 bài học sẽ lấy từ đó; script này chỉ để có dữ liệu test và luôn từ chối chạy ở production.
@@ -19,9 +20,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import random
 import sys
+import uuid
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
@@ -31,133 +35,40 @@ from app.core.security import hash_password
 from app.db.session import get_session_factory
 from app.models.content import Course, Lesson, Word
 from app.models.path import PathNode, PathStage, UserPathProgress
-from app.models.practice import DailyStat, SrsCard, Streak
+from app.models.practice import SrsCard
+from app.models.progress import EventType
 from app.models.user import User
+from app.services.progress import NewEvent, record_events
 
 DATA_DIR = Path(__file__).resolve().parents[3] / "data" / "lessons"
 
 DEMO_USERS = [
     # Tài khoản chính: đã học xong bài 1, đang học bài 2.
     {"email": "demo@chailish.dev", "password": "Demo12345", "full_name": "Học viên Demo",
-     "display_name": "Demo", "level": "HSK1", "xp_total": 120, "with_progress": True},
+     "display_name": "Demo", "level": "HSK1", "xp_total": 0, "with_progress": True},
     # Tài khoản mới tinh để test luồng người dùng lần đầu.
     {"email": "new@chailish.dev", "password": "Demo12345", "full_name": "Người dùng mới",
      "display_name": "Newbie", "level": "beginner", "xp_total": 0, "with_progress": False},
 ]
 
-# Phần bổ sung cho bài 1 (file JSON hiện chưa có điểm ngữ pháp và kịch bản AI).
-LESSON_01_EXTRA = {
-    "topic": "chào hỏi",
-    "grammarPoints": [
-        {"id": "gp-shi", "pattern": "A 是 B", "explanationVi": "Câu khẳng định với 是 (là).",
-         "examples": ["我是学生。", "他是老师。"]},
-        {"id": "gp-ma", "pattern": "Câu + 吗？", "explanationVi": "Thêm 吗 cuối câu để hỏi có/không.",
-         "examples": ["你是学生吗？", "你好吗？"]},
-        {"id": "gp-hen-adj", "pattern": "S + 很 + Tính từ", "explanationVi": "Tính từ làm vị ngữ thường đi với 很.",
-         "examples": ["我很好。"]},
-    ],
-    "aiScenario": {
-        "aiRole": "một bạn sinh viên Trung Quốc tên 小明 mới gặp lần đầu",
-        "learnerRole": "sinh viên Việt Nam mới đến lớp",
-        "situation": "Hai người gặp nhau ở cổng trường ngày đầu nhập học và chào hỏi, giới thiệu bản thân.",
-        "openingLine": "你好！你是学生吗？",
-    },
-}
-
-EXTRA_LESSONS = [
-    {
-        "id": "hsk1-family-02", "order": 2, "title": "Gia đình tôi", "topic": "gia đình",
-        "description": "Giới thiệu các thành viên trong gia đình và hỏi nhà có mấy người.",
-        "vocabulary": [
-            ("jia", "家", "jiā", "gia", "nhà; gia đình", "我家有四口人。", "Wǒ jiā yǒu sì kǒu rén.", "Nhà tôi có bốn người."),
-            ("you", "有", "yǒu", "hữu", "có", "我有一个哥哥。", "Wǒ yǒu yí ge gēge.", "Tôi có một người anh."),
-            ("ba-ba", "爸爸", "bàba", "ba ba", "bố", "我爸爸是老师。", "Wǒ bàba shì lǎoshī.", "Bố tôi là giáo viên."),
-            ("ma-ma", "妈妈", "māma", "ma ma", "mẹ", "妈妈好！", "Māma hǎo!", "Con chào mẹ!"),
-            ("ge-ge", "哥哥", "gēge", "ca ca", "anh trai", "我哥哥很高。", "Wǒ gēge hěn gāo.", "Anh trai tôi rất cao."),
-            ("mei-mei", "妹妹", "mèimei", "muội muội", "em gái", "这是我妹妹。", "Zhè shì wǒ mèimei.", "Đây là em gái tôi."),
-            ("ji", "几", "jǐ", "kỷ", "mấy", "你家有几口人？", "Nǐ jiā yǒu jǐ kǒu rén?", "Nhà bạn có mấy người?"),
-            ("kou", "口", "kǒu", "khẩu", "(lượng từ đếm người trong nhà)", "三口人", "sān kǒu rén", "ba người"),
-            ("ren", "人", "rén", "nhân", "người", "他是中国人。", "Tā shì Zhōngguó rén.", "Anh ấy là người Trung Quốc."),
-        ],
-        "grammarPoints": [
-            {"id": "gp-you", "pattern": "S + 有 + O", "explanationVi": "有 diễn tả sở hữu; phủ định dùng 没有, không dùng 不有.",
-             "examples": ["我有一个妹妹。", "我没有哥哥。"]},
-            {"id": "gp-ji-kou", "pattern": "你家有几口人？", "explanationVi": "几 hỏi số lượng nhỏ (dưới 10), đi kèm lượng từ.",
-             "examples": ["你家有几口人？", "我家有三口人。"]},
-            {"id": "gp-de", "pattern": "Đại từ + (的) + người thân", "explanationVi": "Với người thân có thể bỏ 的: 我妈妈 = 我的妈妈.",
-             "examples": ["我妈妈", "我的老师"]},
-        ],
-        "aiScenario": {
-            "aiRole": "bạn cùng phòng ký túc xá người Bắc Kinh",
-            "learnerRole": "sinh viên Việt Nam đang cho bạn xem ảnh gia đình",
-            "situation": "Buổi tối ở ký túc xá, hai người xem ảnh gia đình và hỏi nhau về người thân.",
-            "openingLine": "这是你家人吗？你家有几口人？",
-        },
-    },
-    {
-        "id": "hsk1-numbers-03", "order": 3, "title": "Số đếm và tuổi", "topic": "số đếm",
-        "description": "Đếm từ 1 đến 10, hỏi và trả lời về tuổi.",
-        "vocabulary": [
-            ("yi", "一", "yī", "nhất", "một", "一个人", "yí ge rén", "một người"),
-            ("er", "二", "èr", "nhị", "hai", "二月", "èr yuè", "tháng hai"),
-            ("san", "三", "sān", "tam", "ba", "三口人", "sān kǒu rén", "ba người"),
-            ("si", "四", "sì", "tứ", "bốn", "四个学生", "sì ge xuésheng", "bốn học sinh"),
-            ("wu", "五", "wǔ", "ngũ", "năm", "五岁", "wǔ suì", "năm tuổi"),
-            ("shi-ten", "十", "shí", "thập", "mười", "十个人", "shí ge rén", "mười người"),
-            ("sui", "岁", "suì", "tuế", "tuổi", "我二十岁。", "Wǒ èrshí suì.", "Tôi hai mươi tuổi."),
-            ("duo-da", "多大", "duō dà", "đa đại", "bao nhiêu tuổi", "你多大？", "Nǐ duō dà?", "Bạn bao nhiêu tuổi?"),
-            ("ge", "个", "gè", "cá", "(lượng từ chung)", "一个朋友", "yí ge péngyou", "một người bạn"),
-        ],
-        "grammarPoints": [
-            {"id": "gp-age", "pattern": "S + (今年) + số + 岁", "explanationVi": "Nói tuổi không cần 是: 我二十岁, không nói 我是二十岁 trong câu thông thường.",
-             "examples": ["我今年二十岁。", "你多大？"]},
-            {"id": "gp-measure-ge", "pattern": "Số + 个 + Danh từ", "explanationVi": "Giữa số và danh từ phải có lượng từ, 个 là lượng từ chung.",
-             "examples": ["三个学生", "一个老师"]},
-            {"id": "gp-liang", "pattern": "两 + lượng từ", "explanationVi": "Đếm 'hai cái' dùng 两, không dùng 二: 两个人.",
-             "examples": ["两个人", "两口人"]},
-        ],
-        "aiScenario": {
-            "aiRole": "nhân viên đăng ký câu lạc bộ tiếng Trung, thân thiện",
-            "learnerRole": "sinh viên muốn đăng ký tham gia câu lạc bộ",
-            "situation": "Nhân viên hỏi thông tin để điền phiếu: tên, tuổi, nhà có mấy người.",
-            "openingLine": "你好！请问你叫什么名字？你多大？",
-        },
-    },
-]
-
-
-def _words_from_json(vocab: list[dict]) -> list[dict]:
-    return [
-        {"code": v["id"], "hanzi": v["hanzi"], "pinyin": v["pinyin"], "han_viet": v.get("hanViet"),
-         "meaning_vi": v["meaningVi"], "example": v.get("example")}
-        for v in vocab
-    ]
-
-
-def _words_from_tuples(vocab: list[tuple]) -> list[dict]:
-    return [
-        {"code": c, "hanzi": h, "pinyin": p, "han_viet": hv, "meaning_vi": m,
-         "example": {"hanzi": eh, "pinyin": ep, "meaningVi": em}}
-        for c, h, p, hv, m, eh, ep, em in vocab
-    ]
-
-
 def _lesson_specs() -> list[dict]:
-    raw = json.loads((DATA_DIR / "hsk1" / "lesson-01.json").read_text(encoding="utf-8"))
-    specs = [{
-        "code": raw["id"], "order": raw["order"], "title": raw["title"], "description": raw.get("description"),
-        "topic": LESSON_01_EXTRA["topic"], "grammar_points": LESSON_01_EXTRA["grammarPoints"],
-        "ai_scenario": LESSON_01_EXTRA["aiScenario"], "content_version": raw.get("contentVersion", 1),
-        "words": _words_from_json(raw["vocabulary"]),
-    }]
-    for lesson in EXTRA_LESSONS:
+    """Đọc mọi bài trong `data/lessons/<cấp>/lesson-*.json` (định dạng: docs/hop-dong-du-lieu.md)."""
+    specs = []
+    for path in sorted(DATA_DIR.glob("*/lesson-*.json")):
+        raw = json.loads(path.read_text(encoding="utf-8"))
         specs.append({
-            "code": lesson["id"], "order": lesson["order"], "title": lesson["title"],
-            "description": lesson["description"], "topic": lesson["topic"],
-            "grammar_points": lesson["grammarPoints"], "ai_scenario": lesson["aiScenario"],
-            "content_version": 1, "words": _words_from_tuples(lesson["vocabulary"]),
+            "code": raw["id"], "order": raw["order"], "title": raw["title"],
+            "description": raw.get("description"), "topic": raw.get("topic"),
+            "level": raw.get("level", "HSK1"),
+            "grammar_points": raw.get("grammarPoints"), "ai_scenario": raw.get("aiScenario"),
+            "content_version": raw.get("contentVersion", 1),
+            "words": [
+                {"code": v["id"], "hanzi": v["hanzi"], "pinyin": v["pinyin"], "han_viet": v.get("hanViet"),
+                 "meaning_vi": v["meaningVi"], "example": v.get("example")}
+                for v in raw["vocabulary"]
+            ],
         })
-    return specs
+    return sorted(specs, key=lambda s: (s["level"], s["order"]))
 
 
 def seed_content(db: Session) -> list[Lesson]:
@@ -255,16 +166,59 @@ def _seed_learning_data(db: Session, user: User, lessons: list[Lesson], nodes: l
     for word in lessons[1].words[:5]:
         db.add(SrsCard(user_id=user.id, word_id=word.id, due_date=today))
 
-    for back in range(7):
-        studied = back != 4  # bỏ một ngày để biểu đồ có chỗ trống
-        db.add(DailyStat(
-            user_id=user.id, stat_date=today - timedelta(days=back),
-            minutes_studied=10 + back * 3 if studied else 0,
-            pronunciation_count=4 if studied else 0, writing_count=3 if studied else 0,
-            reviews_count=12 if studied else 0, lessons_completed=1 if back == 3 else 0,
-            avg_score=80.0 + back if studied else None, xp_earned=20 if studied else 0,
-        ))
-    db.add(Streak(user_id=user.id, current_streak=4, longest_streak=6, last_active_date=today))
+    record_events(db, user, demo_events(user.id, lessons, days=30))
+
+
+def demo_events(user_id, lessons: list[Lesson], days: int = 30) -> list[NewEvent]:
+    """Sinh sự kiện học tập giả cho `days` ngày gần nhất (có vài ngày nghỉ).
+
+    Id sinh cố định theo (user, ngày, thứ tự) nên chạy lại không bị nhân đôi.
+    """
+    tz = ZoneInfo("Asia/Ho_Chi_Minh")
+    today = datetime.now(tz).date()
+    rnd = random.Random(f"chailish-demo-{user_id}")
+    words = [w for lesson in lessons for w in lesson.words]
+    events: list[NewEvent] = []
+    for back in range(days - 1, -1, -1):
+        day = today - timedelta(days=back)
+        # Nghỉ một số ngày cũ để heatmap có chỗ trống; 5 ngày gần nhất luôn học (streak).
+        if back > 4 and rnd.random() < 0.25:
+            continue
+        clock = datetime.combine(day, datetime.min.time(), tz) + timedelta(hours=19, minutes=rnd.randint(0, 90))
+        if back == 0:
+            clock = min(clock, datetime.now(tz) - timedelta(minutes=30))
+        seq = 0
+
+        def add(type_: str, **kw) -> None:
+            nonlocal clock, seq
+            seq += 1
+            events.append(NewEvent(
+                id=uuid.uuid5(uuid.NAMESPACE_URL, f"chailish:demo:{user_id}:{day}:{seq}"),
+                type=type_, occurred_at=clock, **kw,
+            ))
+            clock += timedelta(seconds=kw.get("duration_sec", 30))
+
+        for _ in range(rnd.randint(4, 12)):
+            w = rnd.choice(words)
+            q = rnd.choice([3, 4, 4, 5, 5, 2])
+            add(EventType.SRS_REVIEW, xp=1, duration_sec=12, ref_id=str(w.id), data={"quality": q})
+        for _ in range(rnd.randint(1, 5)):
+            w = rnd.choice(words)
+            tones = {str(t): rnd.randint(55, 100) for t in (1, 2, 3, 4)}
+            score = rnd.randint(60, 98)
+            add(EventType.PRONUNCIATION_SCORED, xp=5 if score >= 90 else 2, duration_sec=40, score=score,
+                ref_id=w.hanzi, data={"tones": tones})
+        for _ in range(rnd.randint(0, 4)):
+            ch = rnd.choice([c for w in words for c in w.hanzi])
+            add(EventType.CHARACTER_WRITTEN, xp=2, duration_sec=60, score=rnd.randint(50, 100), ref_id=ch,
+                data={"mode": rnd.choice(["trace", "free"]), "wrong_strokes": rnd.randint(0, 3)})
+        if back in (20, 12, 3):
+            lesson = lessons[min(len(lessons) - 1, {20: 0, 12: 0, 3: 1}[back])]
+            add(EventType.LESSON_COMPLETED, xp=20, duration_sec=600, score=rnd.randint(75, 98), ref_id=lesson.code)
+        if back % 6 == 1:
+            add(EventType.AI_SESSION_FINISHED, xp=10, duration_sec=420, score=rnd.randint(60, 95),
+                ref_id=f"demo-{day}", data={"lesson_id": lessons[0].id})
+    return events
 
 
 def seed_users(db: Session, lessons: list[Lesson], nodes: list[PathNode], reset: bool) -> list[str]:

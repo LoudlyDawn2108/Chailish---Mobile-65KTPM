@@ -1,5 +1,6 @@
 """Nghiệp vụ trợ lý ôn bài: giới hạn lượt dùng, lịch sử hội thoại, lưu kết quả, tổng kết."""
 
+import uuid
 from collections import Counter
 from datetime import UTC, datetime, time
 from zoneinfo import ZoneInfo
@@ -8,7 +9,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.models import AiConversation, AiMessage, GrammarFeedback, Lesson, User
+from app.models import AiConversation, AiMessage, EventType, GrammarFeedback, Lesson, User
 from app.services.ai.pricing import Usage, estimate_cost_usd
 from app.services.ai.prompts import START_MARKER, LessonContext, build_lesson_context
 from app.services.ai.providers import ChatMessage
@@ -271,7 +272,33 @@ def finish_conversation(db: Session, conv: AiConversation) -> AiConversation:
         conv.status = "completed"
         conv.ended_at = datetime.now(UTC)
         db.flush()
+        _record_finished_event(db, conv)
     return conv
+
+
+AI_SESSION_XP = 10
+
+
+def _record_finished_event(db: Session, conv: AiConversation) -> None:
+    """Ghi sự kiện `ai_session_finished` để XP, streak và thống kê tính cả phiên AI."""
+    from app.services.progress import NewEvent, record_events
+
+    user = db.get(User, conv.user_id)
+    if user is None:
+        return
+    started = conv.created_at
+    duration = int((conv.ended_at - _as_aware(started)).total_seconds()) if started else 0
+    record_events(db, user, [NewEvent(
+        # id cố định theo phiên: gọi finish nhiều lần cũng chỉ có một sự kiện.
+        id=uuid.uuid5(uuid.NAMESPACE_URL, f"chailish:ai-session:{conv.id}"),
+        type=EventType.AI_SESSION_FINISHED, occurred_at=conv.ended_at, xp=AI_SESSION_XP,
+        duration_sec=max(0, duration), score=conv.overall_score, ref_id=str(conv.id),
+        data={"lesson_id": conv.lesson_id},
+    )])
+
+
+def _as_aware(dt: datetime) -> datetime:
+    return dt if dt.tzinfo else dt.replace(tzinfo=UTC)
 
 
 __all__ = [
