@@ -17,6 +17,11 @@ engine = create_engine(
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 
+def get_session_factory() -> sessionmaker[Session]:
+    """Dùng cho code chạy sau khi response đã bắt đầu (vd. streaming) cần phiên CSDL riêng."""
+    return SessionLocal
+
+
 def get_db() -> Generator[Session, None, None]:
     db = SessionLocal()
     try:

@@ -49,8 +49,36 @@ class Settings(BaseSettings):
     LOGIN_FAILURE_WINDOW_SECONDS: int = 15 * 60
     AUTH_REQUESTS_PER_MINUTE: int = 20  # register / refresh / forgot-password theo IP
 
-    # --- Dịch vụ bên ngoài ---
+    # --- Trợ lý ôn bài AI ---
+    AI_PROVIDER: str = "anthropic"  # anthropic | openai
+    # Claude: mặc định Opus 5.5 (chất lượng phân tích ngữ pháp tốt nhất),
+    # đổi sang "claude-haiku-5-5" để giảm chi phí chỉ bằng cấu hình.
     ANTHROPIC_API_KEY: str = ""
+    ANTHROPIC_MODEL: str = "claude-opus-5-5"
+    # Server-side fallback khi model từ chối (refusal) — chỉ hỗ trợ Opus 5.5 / Sonnet 5.5 / Fable.
+    ANTHROPIC_REFUSAL_FALLBACK: bool = True
+    OPENAI_API_KEY: str = ""
+    OPENAI_MODEL: str = "gpt-5-mini"
+    OPENAI_BASE_URL: str = ""  # để trống = API chính thức của OpenAI
+    # Gửi reasoning_effort (chỉ model suy luận hỗ trợ). Tắt nếu dùng model không hỗ trợ.
+    OPENAI_REASONING_EFFORT_ENABLED: bool = True
+    # Múi giờ tính "mỗi ngày" cho giới hạn lượt dùng AI.
+    AI_LIMIT_TIMEZONE: str = "Asia/Ho_Chi_Minh"
+    # Độ sâu suy luận: hội thoại cần nhanh, phân tích ngữ pháp cần kỹ hơn.
+    AI_CHAT_EFFORT: str = "low"
+    AI_GRAMMAR_EFFORT: str = "medium"
+    AI_MAX_OUTPUT_TOKENS: int = 4096
+    AI_REQUEST_TIMEOUT_SECONDS: float = 90.0
+    # Giới hạn chống lạm dụng / kiểm soát chi phí
+    AI_DAILY_MESSAGE_LIMIT: int = 40  # số câu trả lời gửi AI mỗi người mỗi ngày
+    AI_DAILY_CONVERSATION_LIMIT: int = 10
+    AI_MAX_TURNS: int = 8  # 5-8 lượt mỗi phiên theo đề cương
+    AI_MAX_MESSAGE_CHARS: int = 120
+    # Giá USD / 1 triệu token cho model không có trong bảng giá mặc định (vd. OpenAI).
+    AI_PRICE_INPUT_PER_MTOK: float | None = None
+    AI_PRICE_OUTPUT_PER_MTOK: float | None = None
+
+    # --- Dịch vụ bên ngoài khác ---
     AZURE_SPEECH_KEY: str = ""
     AZURE_SPEECH_REGION: str = "southeastasia"
 

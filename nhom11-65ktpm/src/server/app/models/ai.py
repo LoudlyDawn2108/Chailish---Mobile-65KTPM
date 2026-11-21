@@ -19,6 +19,10 @@ class AiConversation(TimestampMixin, Base):
     lesson_id: Mapped[int | None] = mapped_column(
         ForeignKey("lessons.id", ondelete="SET NULL"), index=True
     )
+    # anthropic | openai
+    provider: Mapped[str] = mapped_column(
+        String(20), default="anthropic", server_default="anthropic"
+    )
     model: Mapped[str] = mapped_column(String(64))
     status: Mapped[str] = mapped_column(String(20), default="active")  # active | completed
     max_turns: Mapped[int] = mapped_column(Integer, default=8)
@@ -77,6 +81,7 @@ class GrammarFeedback(CreatedAtMixin, Base):
     )
     original_sentence: Mapped[str] = mapped_column(Text)
     corrected_sentence: Mapped[str | None] = mapped_column(Text)
+    corrected_pinyin: Mapped[str | None] = mapped_column(Text)
     # [{"text":"我","role":"subject","pinyin":"wǒ"}, ...]
     components: Mapped[list | None] = mapped_column(JSONType)
     # [{"span","correction","errorType","explanationVi","grammarPointId"}]
