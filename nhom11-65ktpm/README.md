@@ -120,7 +120,7 @@ flowchart TD
 
 | Thành phần | Công nghệ / Thư viện chính | Vai trò trong hệ thống |
 | :--- | :--- | :--- |
-| **Mobile App** | Flutter 3.22+, Dart 3.4+ | Phát triển ứng dụng đa nền tảng (Android/iOS) |
+| **Mobile App** | Flutter 3.47, Dart 3.13 | Phát triển ứng dụng đa nền tảng (Android/iOS) |
 | **State Management** | `flutter_riverpod` | Quản lý trạng thái ứng dụng phản ứng (reactive state) |
 | **Routing** | `go_router` | Điều hướng màn hình khai báo tập trung |
 | **Local Database** | `sqflite` | Lưu trữ dữ liệu cục bộ phục vụ Offline-First |
@@ -196,9 +196,11 @@ nhom11-65ktpm/
 
 ## 🚀 6. Hướng Dẫn Cài Đặt & Khởi Chạy
 
+> 📘 Hướng dẫn chi tiết từng bước (chạy trên điện thoại thật, tài khoản demo, lỗi hay gặp): **[docs/huong-dan-setup.md](docs/huong-dan-setup.md)**
+
 ### 6.1. Yêu cầu môi trường tiền đề
-- **Flutter SDK:** Phiên bản `>= 3.22.0` (kèm Android SDK / Android Studio)
-- **Python:** Phiên bản `>= 3.11`
+- **Flutter SDK:** Phiên bản `3.47.x` (Dart 3.13, kèm Android SDK Platform 37 / Android Studio)
+- **Python:** Phiên bản `3.12`
 - **PostgreSQL:** Phiên bản `>= 16` (hoặc cài qua Docker)
 - **Docker & Docker Compose:** Đã cài đặt và đang chạy dịch vụ
 
@@ -228,8 +230,9 @@ nhom11-65ktpm/
    ```
 5. Chạy migration cơ sở dữ liệu và nạp dữ liệu mẫu:
    ```bash
+   docker compose up -d db          # PostgreSQL 16 bằng Docker
    alembic upgrade head
-   python scripts/seed_lessons.py
+   python -m scripts.seed_dev       # dữ liệu mẫu + tài khoản demo@chailish.dev / Demo12345
    ```
 6. Khởi động server với chế độ hot-reload:
    ```bash
@@ -261,7 +264,10 @@ docker compose up -d --build
    ```
 4. Khởi chạy ứng dụng:
    ```bash
-   flutter run
+   flutter run                       # Android Emulator (API mặc định http://10.0.2.2:8000/api)
+   # Điện thoại thật qua USB:
+   adb reverse tcp:8000 tcp:8000
+   flutter run --dart-define=API_BASE_URL=http://localhost:8000/api
    ```
 
 ---
