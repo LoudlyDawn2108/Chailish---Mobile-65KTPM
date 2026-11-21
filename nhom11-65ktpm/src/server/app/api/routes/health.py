@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.db.session import get_db
+from app.services.ai.providers import provider_configured
 
 router = APIRouter(tags=["health"])
 
@@ -23,7 +24,10 @@ def health_check(db: Session = Depends(get_db)) -> dict:
         "environment": settings.ENVIRONMENT,
         "database": database,
         "services": {
-            "ai_assistant": "configured" if settings.ANTHROPIC_API_KEY else "not_configured",
+            "ai_assistant": {
+                "provider": settings.AI_PROVIDER,
+                "status": "configured" if provider_configured() else "not_configured",
+            },
             "pronunciation_online": "configured" if settings.AZURE_SPEECH_KEY else "not_configured",
         },
     }
