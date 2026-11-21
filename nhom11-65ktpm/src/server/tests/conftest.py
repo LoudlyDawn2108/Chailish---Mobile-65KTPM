@@ -11,7 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.core.rate_limit import auth_requests, login_failures
-from app.db.session import get_db
+from app.db.session import get_db, get_session_factory
 from app.main import app
 from app.models import Base
 
@@ -45,10 +45,18 @@ def db_session(engine):
 
 @pytest.fixture()
 def client(db_session):
+    factory = sessionmaker(bind=db_session.get_bind(), autoflush=False, expire_on_commit=False)
+
     def _override_get_db():
-        yield db_session
+        # Mỗi request một phiên riêng giống môi trường thật.
+        session = factory()
+        try:
+            yield session
+        finally:
+            session.close()
 
     app.dependency_overrides[get_db] = _override_get_db
+    app.dependency_overrides[get_session_factory] = lambda: factory
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()
