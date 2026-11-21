@@ -58,11 +58,13 @@ auth_requests = SlidingWindowLimiter(settings.AUTH_REQUESTS_PER_MINUTE, 60)
 
 
 def client_ip(request: Request) -> str:
-    # Sau Nginx reverse proxy, IP thật nằm ở X-Forwarded-For / X-Real-IP.
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.headers.get("x-real-ip") or (request.client.host if request.client else "?")
+    # Sau Nginx, X-Real-IP luôn được ghi đè bằng $remote_addr nên tin được.
+    # KHÔNG lấy phần tử đầu của X-Forwarded-For vì client tự gửi header đó được
+    # (giả mạo IP để né rate limit).
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip:
+        return real_ip.strip()
+    return request.client.host if request.client else "?"
 
 
 def raise_too_many(retry_after: int, detail: str) -> None:
