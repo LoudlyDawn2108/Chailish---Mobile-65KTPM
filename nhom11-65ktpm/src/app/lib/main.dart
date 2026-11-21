@@ -21,6 +21,8 @@ class ChaiLishApp extends StatelessWidget {
       title: 'ChaiLish',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
       routerConfig: appRouter,
     );
   }
