@@ -5,6 +5,7 @@
   "level": "HSK1",
   "order": 1,
   "title": "Chào hỏi cơ bản",
+  "topic": "chào hỏi",
   "description": "Làm quen với lời chào và một số từ dùng khi giới thiệu bản thân.",
   "vocabulary": [
     {
@@ -115,5 +116,39 @@
         "meaningVi": "Em chào tạm biệt thầy/cô!"
       }
     }
-  ]
+  ],
+  "grammarPoints": [
+    {
+      "id": "gp-shi",
+      "pattern": "A 是 B",
+      "explanationVi": "Câu khẳng định với 是 (là).",
+      "examples": [
+        "我是学生。",
+        "他是老师。"
+      ]
+    },
+    {
+      "id": "gp-ma",
+      "pattern": "Câu + 吗？",
+      "explanationVi": "Thêm 吗 cuối câu để hỏi có/không.",
+      "examples": [
+        "你是学生吗？",
+        "你好吗？"
+      ]
+    },
+    {
+      "id": "gp-hen-adj",
+      "pattern": "S + 很 + Tính từ",
+      "explanationVi": "Tính từ làm vị ngữ thường đi với 很.",
+      "examples": [
+        "我很好。"
+      ]
+    }
+  ],
+  "aiScenario": {
+    "aiRole": "một bạn sinh viên Trung Quốc tên 小明 mới gặp lần đầu",
+    "learnerRole": "sinh viên Việt Nam mới đến lớp",
+    "situation": "Hai người gặp nhau ở cổng trường ngày đầu nhập học và chào hỏi, giới thiệu bản thân.",
+    "openingLine": "你好！你是学生吗？"
+  }
 }

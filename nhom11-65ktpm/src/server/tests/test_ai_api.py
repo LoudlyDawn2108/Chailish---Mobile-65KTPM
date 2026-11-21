@@ -287,6 +287,12 @@ def test_max_turns_then_finish_summary(client, auth_headers, fake_provider, less
     # Phiên đã kết thúc thì không gửi thêm được.
     assert send(client, auth_headers, conv["id"]).status_code == 409
 
+    # Kết thúc phiên ghi một sự kiện học tập (gọi finish lần nữa không ghi trùng).
+    client.post(f"/api/ai/conversations/{conv['id']}/finish", headers=auth_headers)
+    events = client.get("/api/events", params={"type": "ai_session_finished"}, headers=auth_headers).json()
+    assert len(events) == 1
+    assert events[0]["ref_id"] == conv["id"] and events[0]["xp"] == 10 and events[0]["score"] == 85.0
+
 
 def test_daily_message_limit(client, auth_headers, fake_provider, lessons, monkeypatch):
     monkeypatch.setattr(settings, "AI_DAILY_MESSAGE_LIMIT", 1)
