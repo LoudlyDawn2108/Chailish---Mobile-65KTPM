@@ -135,7 +135,7 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
             const SizedBox(height: 24),
 
             // Nut bam micro ghi am
-            InkWell(
+            GestureDetector(
               onTap: _isAssessing
                   ? null
                   : () async {
@@ -167,8 +167,8 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
                         }
                       }
                     },
-              borderRadius: BorderRadius.circular(40),
-              child: Container(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
@@ -176,9 +176,9 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
                   color: _isRecording ? Colors.redAccent : Theme.of(context).primaryColor,
                   boxShadow: [
                     BoxShadow(
-                      color: (_isRecording ? Colors.redAccent : Theme.of(context).primaryColor).withOpacity(0.3),
-                      blurRadius: 16,
-                      spreadRadius: 4,
+                      color: (_isRecording ? Colors.redAccent : Theme.of(context).primaryColor).withOpacity(_isRecording ? 0.5 : 0.25),
+                      blurRadius: _isRecording ? 20 : 12,
+                      spreadRadius: _isRecording ? 6 : 2,
                     )
                   ],
                 ),
