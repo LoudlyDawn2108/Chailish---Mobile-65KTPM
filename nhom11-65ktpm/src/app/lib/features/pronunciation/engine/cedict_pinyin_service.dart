@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'package:flutter/services.dart';
 import '../../../../core/contracts/lesson_repository.dart';
 import '../../../../core/contracts/speech_services.dart';
 
@@ -20,21 +18,19 @@ class CedictPinyinService implements PinyinService {
     _numberToHanzi.forEach((digit, hanzi) {
       text = text.replaceAll(digit, hanzi);
     });
-    final punctRegex = RegExp(r'[，。！？、；：“”‘’（）《》〈〉【】…—\.,!?;:\(\)\[\]"\'\-]');
+    final punctRegex = RegExp(r"""[，。！？、；：“”‘’（）《》〈〉【】…—.,!?;:()\[\]"'\-]""");
     return text.replaceAll(punctRegex, '').replaceAll(RegExp(r'\s+'), ' ').trim();
   }
 
   Future<void> _ensureLoaded() async {
     if (_dict != null) return;
     final dict = <String, String>{};
-    // Nap tu cac bai hoc san co
     final allLessons = await _lessons.lessons();
     for (final l in allLessons) {
       for (final w in l.words) {
         dict[w.hanzi] = w.pinyin.toLowerCase().trim();
       }
     }
-    // Bo sung cac tu pho bien HSK1-2
     final baseDict = {
       '你好': 'nǐ hǎo', '您好': 'nín hǎo', '谢谢': 'xièxie', '不客气': 'bú kèqi',
       '再见': 'zàijiàn', '对不起': 'duìbuqǐ', '没关系': 'méi guānxi', '请问': 'qǐngwèn',
@@ -75,7 +71,6 @@ class CedictPinyinService implements PinyinService {
       }
 
       var matched = false;
-  // Uu tien khop cum tu dai nhat truoc (4 ky tu giam dan ve 1)
       for (var len = 4; len >= 1; len--) {
         if (i + len <= clean.length) {
           final sub = clean.substring(i, i + len);
@@ -112,7 +107,6 @@ class CedictPinyinService implements PinyinService {
     if (hanziList.length != pinyinList.length) return;
     final n = hanziList.length;
 
-    // Quy tac 1: Bien dieu 2 thanh 3 lien nhau: 3 + 3 -> 2 + 3 (nǐ hǎo -> ní hǎo)
     for (var i = 0; i < n - 1; i++) {
       final p1 = pinyinList[i];
       final p2 = pinyinList[i + 1];
@@ -121,22 +115,16 @@ class CedictPinyinService implements PinyinService {
       }
     }
 
-    // Quy tac 2: Bien dieu chu '不' (bu4): dung truoc thanh 4 bien thanh bu2 (bú)
     for (var i = 0; i < n; i++) {
       if (hanziList[i] == '不') {
         if (i < n - 1 && _hasTone4(pinyinList[i + 1])) {
           pinyinList[i] = 'bú';
         } else if (i > 0 && i < n - 1 && hanziList[i - 1] == hanziList[i + 1]) {
-          // Cau truc lap lai dong tu A bu A: doc thanh nhe bu5
           pinyinList[i] = 'bu';
         }
       }
     }
 
-    // Quy tac 3: Bien dieu chu '一' (yi1):
-    // - Truoc thanh 4 doc thanh yí (thanh 2)
-    // - Truoc thanh 1, 2, 3 doc thanh yì (thanh 4)
-    // - O giua cum dong tu lap lai (kan yi kan) doc thanh nhe yi5
     for (var i = 0; i < n; i++) {
       if (hanziList[i] == '一') {
         if (i > 0 && i < n - 1 && hanziList[i - 1] == hanziList[i + 1]) {
