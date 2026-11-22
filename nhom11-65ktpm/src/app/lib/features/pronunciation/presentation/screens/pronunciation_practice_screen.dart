@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/contracts/models/pronunciation.dart';
 import '../../../../core/contracts/pronunciation_scorer.dart';
 import '../../../../core/contracts/speech_services.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/glass.dart';
 
-/// Man hinh luyen phat am va xem phan hoi chi tiet. Chu so huu: Khanh (#15)
+/// Man hinh luyen phat am va xem phan hoi chi tiet chuan Liquid Glass UI. Chu so huu: Khanh (#15)
 class PronunciationPracticeScreen extends ConsumerStatefulWidget {
   final String targetHanzi;
   final String targetPinyin;
@@ -35,19 +37,23 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
     final scorer = ref.watch(pronunciationScorerProvider);
     final mode = ref.watch(scoringModeProvider);
 
-    return Scaffold(
-      appBar: AppBar(
+    return GlassScaffold(
+      appBar: GlassAppBar(
         title: const Text('Luyện Phát Âm'),
         actions: [
           Center(
             child: Padding(
               padding: const EdgeInsets.only(right: 16.0),
-              child: Chip(
-                label: Text(
-                  mode == ScoringMode.preferOnline ? 'Online (Azure)' : 'Offline',
-                  style: const TextStyle(fontSize: 12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: ShapeDecoration(
+                  color: (mode == ScoringMode.preferOnline ? AppColors.ceramicBlue : AppColors.warningOrange).withValues(alpha: 0.2),
+                  shape: const StadiumBorder(),
                 ),
-                backgroundColor: mode == ScoringMode.preferOnline ? Colors.blue.shade50 : Colors.orange.shade50,
+                child: Text(
+                  mode == ScoringMode.preferOnline ? 'Online (Azure)' : 'Offline',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                ),
               ),
             ),
           ),
