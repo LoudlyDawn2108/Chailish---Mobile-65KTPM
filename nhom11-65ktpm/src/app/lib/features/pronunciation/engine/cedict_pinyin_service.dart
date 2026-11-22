@@ -126,6 +126,9 @@ class CedictPinyinService implements PinyinService {
       if (hanziList[i] == '不') {
         if (i < n - 1 && _hasTone4(pinyinList[i + 1])) {
           pinyinList[i] = 'bú';
+        } else if (i > 0 && i < n - 1 && hanziList[i - 1] == hanziList[i + 1]) {
+          // Cau truc lap lai dong tu A bu A: doc thanh nhe bu5
+          pinyinList[i] = 'bu';
         }
       }
     }
