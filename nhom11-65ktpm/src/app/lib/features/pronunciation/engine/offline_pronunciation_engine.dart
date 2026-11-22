@@ -60,6 +60,10 @@ class OfflinePronunciationEngine implements PronunciationScorer {
       final expPinyinStr = i < syls.length ? syls[i] : '';
       final expected = splitPinyin(expPinyinStr);
 
+      if (expected.initial.isEmpty && expected.finalPart.isEmpty) {
+        continue;
+      }
+
       // Truong hop binh thuong: tinh diem dua tren do lech am
       final actual = expected; // Gia lap am nhan duoc tu STT
       final errors = <PronunciationError>[];
