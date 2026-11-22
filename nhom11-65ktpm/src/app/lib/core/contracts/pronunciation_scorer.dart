@@ -5,8 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'fake_implementation.dart';
 import 'models/pronunciation.dart';
-import '../config/app_config.dart';
-import '../../features/pronunciation/engine/hybrid_pronunciation_scorer.dart';
 
 /// Chấm phát âm. Chủ sở hữu: **Khánh** (#13 offline, #14 online + tự chuyển).
 ///
@@ -19,14 +17,7 @@ abstract class PronunciationScorer {
   });
 }
 
-final pronunciationScorerProvider = Provider<PronunciationScorer>((ref) {
-  if (AppConfig.fakeData) {
-    return FakePronunciationScorer();
-  }
-  return HybridPronunciationScorer(
-    getScoringMode: () => ref.watch(scoringModeProvider),
-  );
-});
+final pronunciationScorerProvider = Provider<PronunciationScorer>((ref) => FakePronunciationScorer());
 
 /// Cài đặt chế độ chấm. Màn Cài đặt của **Đệ** (#24) đổi và lưu giá trị;
 /// bộ chấm kết hợp của **Khánh** (#14) đọc `ref.watch(scoringModeProvider)`.

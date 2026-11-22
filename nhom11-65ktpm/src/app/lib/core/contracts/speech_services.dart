@@ -6,9 +6,6 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
-import '../config/app_config.dart';
-import '../../features/pronunciation/data/real_voice_recorder.dart';
-import '../../features/pronunciation/engine/cedict_pinyin_service.dart';
 import 'fake_implementation.dart';
 import 'lesson_repository.dart';
 import 'models/pronunciation.dart';
@@ -110,13 +107,7 @@ abstract class VoiceRecorder {
 }
 
 final voiceRecorderProvider = Provider<VoiceRecorder>((ref) {
-  if (AppConfig.fakeData) {
-    final r = FakeVoiceRecorder();
-    ref.onDispose(r.cancel);
-    return r;
-  }
-  // Su dung bo ghi am that RealVoiceRecorder (#11)
-  final r = RealVoiceRecorder();
+  final r = FakeVoiceRecorder();
   ref.onDispose(r.cancel);
   return r;
 });
@@ -170,11 +161,7 @@ abstract class PinyinService {
 }
 
 final pinyinServiceProvider = Provider<PinyinService>((ref) {
-  if (AppConfig.fakeData) {
-    return FakePinyinService(ref.watch(lessonRepositoryProvider));
-  }
-  // Su dung CedictPinyinService voi bien dieu 3-3, bu, yi (#12)
-  return CedictPinyinService(ref.watch(lessonRepositoryProvider));
+  return FakePinyinService(ref.watch(lessonRepositoryProvider));
 });
 
 /// Bản giả: tra trong từ vựng của các bài mẫu (không có trong bài thì trả "?").
