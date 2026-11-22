@@ -43,6 +43,7 @@ class CedictPinyinService implements PinyinService {
       '今天': 'jīntiān', '明天': 'míngtiān', '昨天': 'zuótiān', '现在': 'xiànzài',
       '喜欢': 'xǐhuan', '认识': 'rènshi', '高兴': 'gāoxìng', '喝水': 'hē shuǐ',
       '吃米饭': 'chī mǐfàn', '看书': 'kàn shū', '去学校': 'qù xuéxiào',
+      '买东西': 'mǎi dōngxi', '打电话': 'dǎ diànhuà', '听音乐': 'tīng yīnyuè',
       '几': 'jǐ', '什么': 'shénme', '多少': 'duōshao', '怎么': 'zěnme',
       '一': 'yī', '二': 'èr', '三': 'sān', '四': 'sì', '五': 'wǔ',
       '六': 'liù', '七': 'qī', '八': 'bā', '九': 'jiǔ', '十': 'shí',
@@ -50,6 +51,7 @@ class CedictPinyinService implements PinyinService {
       '冷': 'lěng', '热': 'rè', '快': 'kuài', '慢': 'màn',
       '我': 'wǒ', '你': 'nǐ', '他': 'tā', '她': 'tā', '我们': 'wǒmen',
       '是': 'shì', '有': 'yǒu', '在': 'zài', '不': 'bù', '没': 'méi',
+      '想': 'xiǎng', '能': 'néng', '会': 'huì', '可以': 'kěyǐ', '做': 'zuò',
     };
     baseDict.forEach((k, v) {
       dict.putIfAbsent(k, () => v);
@@ -73,7 +75,7 @@ class CedictPinyinService implements PinyinService {
       }
 
       var matched = false;
-      // Uu tien khop cum tu dai nhat truoc (4 ky tu giam dan ve 1)
+  // Uu tien khop cum tu dai nhat truoc (4 ky tu giam dan ve 1)
       for (var len = 4; len >= 1; len--) {
         if (i + len <= clean.length) {
           final sub = clean.substring(i, i + len);
