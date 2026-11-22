@@ -68,5 +68,13 @@ void main() {
       expect(ch.initial, 'ch');
       expect(sh.initial, 'sh');
     });
+
+    test('6. Kiem tra am tiet thanh nhe tone = 5', () {
+      final ma = splitPinyin('ma');
+      final de = splitPinyin('de');
+
+      expect(ma.tone, 5);
+      expect(de.tone, 5);
+    });
   });
 }
