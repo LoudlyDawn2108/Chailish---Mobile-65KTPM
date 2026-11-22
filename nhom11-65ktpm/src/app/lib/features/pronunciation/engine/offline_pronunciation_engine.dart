@@ -2,10 +2,9 @@ import 'dart:math';
 import '../../../../core/contracts/models/pronunciation.dart';
 import '../../../../core/contracts/pronunciation_scorer.dart';
 
-/// Thuat toan can chinh Levenshtein co trong so va ma tran phat loi nguoi Viet.
+/// Thuat toan can chinh am tiet va ma tran phat loi nguoi Viet.
 /// Chu so huu: Khanh (#13)
 class OfflinePronunciationEngine implements PronunciationScorer {
-  // Cap phu am dau de nham cua nguoi Viet
   static const Map<String, List<String>> _confusableInitials = {
     'zh': ['z', 'j'],
     'z': ['zh'],
@@ -22,7 +21,6 @@ class OfflinePronunciationEngine implements PronunciationScorer {
     'r': ['l', 'z', 'd'],
   };
 
-  // Cap van mau de nham
   static const Map<String, List<String>> _confusableFinals = {
     'u': ['ü', 'v', 'ou'],
     'ü': ['u', 'v'],
@@ -43,12 +41,16 @@ class OfflinePronunciationEngine implements PronunciationScorer {
     required String referenceHanzi,
     required String referencePinyin,
     Recording? recording,
+    String? recognizedPinyin,
   }) async {
     final chars = referenceHanzi.runes
         .map(String.fromCharCode)
         .where((c) => RegExp(r'[一-鿿]').hasMatch(c))
         .toList();
-    final syls = referencePinyin.trim().split(RegExp(r'\s+'));
+    final expSyls = referencePinyin.trim().split(RegExp(r'\s+'));
+    final actSyls = (recognizedPinyin != null && recognizedPinyin.isNotEmpty)
+        ? recognizedPinyin.trim().split(RegExp(r'\s+'))
+        : <String>[];
 
     final syllablesScore = <SyllableScore>[];
     double totalScore = 0.0;
@@ -57,32 +59,32 @@ class OfflinePronunciationEngine implements PronunciationScorer {
 
     for (var i = 0; i < chars.length; i++) {
       final hanzi = chars[i];
-      final expPinyinStr = i < syls.length ? syls[i] : '';
+      final expPinyinStr = i < expSyls.length ? expSyls[i] : '';
       final expected = splitPinyin(expPinyinStr);
 
       if (expected.initial.isEmpty && expected.finalPart.isEmpty) {
         continue;
       }
 
-      // Truong hop binh thuong: tinh diem dua tren do lech am
-      final actual = expected; // Gia lap am nhan duoc tu STT
-      final errors = <PronunciationError>[];
+      // Neu co chuoi doc that su tu nguoi hoc thi dung de can chinh
+      final SyllableParts actual = (i < actSyls.length)
+          ? splitPinyin(actSyls[i])
+          : expected;
 
+      final errors = <PronunciationError>[];
       double initialPen = 0.0;
       double finalPen = 0.0;
       double tonePen = 0.0;
 
-      // Kiem tra loi phu am
       if (expected.initial != actual.initial) {
         errors.add(PronunciationError.initial);
         if (_confusableInitials[expected.initial]?.contains(actual.initial) == true) {
-          initialPen = 15.0; // Phat nhe vi la loi pho bien nguoi Viet
+          initialPen = 15.0;
         } else {
           initialPen = 40.0;
         }
       }
 
-      // Kiem tra loi van mau
       if (expected.finalPart != actual.finalPart) {
         errors.add(PronunciationError.finalPart);
         if (_confusableFinals[expected.finalPart]?.contains(actual.finalPart) == true) {
@@ -92,7 +94,6 @@ class OfflinePronunciationEngine implements PronunciationScorer {
         }
       }
 
-      // Kiem tra loi thanh dieu (nham thanh 2 va thanh 3 rat pho bien)
       if (expected.tone != actual.tone) {
         errors.add(PronunciationError.tone);
         if ((expected.tone == 2 && actual.tone == 3) || (expected.tone == 3 && actual.tone == 2)) {
@@ -133,10 +134,9 @@ class OfflinePronunciationEngine implements PronunciationScorer {
     final avgAccuracy = (totalAccuracy / n).roundToDouble();
     final avgTone = (totalTone / n).roundToDouble();
 
-    // Fluency tinh theo do dai audio neu co file ghi am
     double fluency = 92.0;
     if (recording != null && recording.duration.inMilliseconds > 0) {
-      final expectedDurationMs = chars.length * 600; // khoang 600ms moi am tiet
+      final expectedDurationMs = chars.length * 600;
       final actualMs = recording.duration.inMilliseconds;
       final ratio = actualMs / expectedDurationMs;
       if (ratio > 2.0 || ratio < 0.4) {
@@ -149,7 +149,7 @@ class OfflinePronunciationEngine implements PronunciationScorer {
       accuracy: avgAccuracy,
       tone: avgTone,
       fluency: fluency,
-      completeness: (chars.isNotEmpty && syls.isNotEmpty) ? 100.0 : 0.0,
+      completeness: (chars.isNotEmpty && expSyls.isNotEmpty) ? 100.0 : 0.0,
       source: ScoringSource.offline,
       recognizedText: referenceHanzi,
       syllables: syllablesScore,
