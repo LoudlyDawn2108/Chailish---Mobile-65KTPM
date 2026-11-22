@@ -12,20 +12,20 @@ void main() {
     });
 
     test('1. Tach am tiet pinyin co dau chuan xac', () {
-      final hǎo = splitPinyin('hǎo');
-      expect(hǎo.initial, 'h');
-      expect(hǎo.finalPart, 'ao');
-      expect(hǎo.tone, 3);
+      final haoSyl = splitPinyin('hǎo');
+      expect(haoSyl.initial, 'h');
+      expect(haoSyl.finalPart, 'ao');
+      expect(haoSyl.tone, 3);
 
-      final nǐ = splitPinyin('nǐ');
-      expect(nǐ.initial, 'n');
-      expect(nǐ.finalPart, 'i');
-      expect(nǐ.tone, 3);
+      final niSyl = splitPinyin('nǐ');
+      expect(niSyl.initial, 'n');
+      expect(niSyl.finalPart, 'i');
+      expect(niSyl.tone, 3);
 
-      final zhōng = splitPinyin('zhōng');
-      expect(zhōng.initial, 'zh');
-      expect(zhōng.finalPart, 'ong');
-      expect(zhōng.tone, 1);
+      final zhongSyl = splitPinyin('zhōng');
+      expect(zhongSyl.initial, 'zh');
+      expect(zhongSyl.finalPart, 'ong');
+      expect(zhongSyl.tone, 1);
     });
 
     test('2. Cham diem cau doc chuan tra ve diem cao (>80)', () async {
