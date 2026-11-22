@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:math';
 
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 
 import '../../../../core/contracts/models/pronunciation.dart';
@@ -35,8 +33,8 @@ class RealVoiceRecorder implements VoiceRecorder {
   @override
   Future<bool> start() async {
     try {
-      final status = await Permission.microphone.request();
-      if (!status.isGranted) return false;
+      final hasPerm = await _recorder.hasPermission();
+      if (!hasPerm) return false;
 
       final dir = await getApplicationDocumentsDirectory();
       final audioDir = Directory('${dir.path}/recordings');
@@ -61,7 +59,6 @@ class RealVoiceRecorder implements VoiceRecorder {
       _ampSub = Stream.periodic(const Duration(milliseconds: 60))
           .asyncMap((_) => _recorder.getAmplitude())
           .listen((amp) {
-        // Chuyen tu dB sang khoang 0.0 - 1.0
         final db = amp.current;
         if (db < -50) {
           _amp.add(0.05);
@@ -111,10 +108,10 @@ class RealVoiceRecorder implements VoiceRecorder {
     } catch (_) {}
   }
 
-  void dispose() {
+  Future<void> dispose() async {
     _ampSub?.cancel();
     _recordSub?.cancel();
-    _amp.close();
-    _recorder.dispose();
+    await _amp.close();
+    await _recorder.dispose();
   }
 }
