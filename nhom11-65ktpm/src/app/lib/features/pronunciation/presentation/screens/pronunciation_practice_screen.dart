@@ -47,7 +47,7 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: ShapeDecoration(
-                  color: (mode == ScoringMode.preferOnline ? AppColors.ceramicBlue : AppColors.warningOrange).withValues(alpha: 0.2),
+                  color: (mode == ScoringMode.preferOnline ? AppColors.infoBlue : AppColors.warningOrange).withValues(alpha: 0.2),
                   shape: const StadiumBorder(),
                 ),
                 child: Text(
