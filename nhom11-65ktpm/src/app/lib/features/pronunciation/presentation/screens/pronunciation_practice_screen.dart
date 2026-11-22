@@ -291,10 +291,16 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
                 if (s.status == SyllableStatus.error) chipColor = Colors.red;
                 if (s.status == SyllableStatus.warn) chipColor = Colors.orange;
 
-                return Chip(
+                return ActionChip(
                   avatar: CircleAvatar(backgroundColor: chipColor, radius: 6),
                   label: Text('${s.hanzi} (${s.expected.initial}${s.expected.finalPart}${s.expected.tone})'),
                   backgroundColor: chipColor.withOpacity(0.1),
+                  onPressed: () {
+                    final errStr = s.errors.isEmpty ? 'Phát âm chuẩn xác!' : 'Cần chú ý lỗi: ${s.errors.map((e) => e.name).join(", ")}';
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${s.hanzi}: $errStr')),
+                    );
+                  },
                 );
               }).toList(),
             ),
