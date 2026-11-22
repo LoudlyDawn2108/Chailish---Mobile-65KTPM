@@ -158,6 +158,14 @@ class CedictPinyinService implements PinyinService {
   bool _hasTone3(String p) => RegExp(r'[ǎěǐǒǔǚ]').hasMatch(p);
   bool _hasTone4(String p) => RegExp(r'[àèìòùǜ]').hasMatch(p);
 
+  int getToneNumber(String p) {
+    if (_hasTone1(p)) return 1;
+    if (_hasTone2(p)) return 2;
+    if (_hasTone3(p)) return 3;
+    if (_hasTone4(p)) return 4;
+    return 5;
+  }
+
   String _changeToTone2(String p) {
     return p
         .replaceAll('ǎ', 'á')
