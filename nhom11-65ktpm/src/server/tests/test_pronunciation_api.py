@@ -27,3 +27,12 @@ def test_pronunciation_assess_wav_mock():
     assert "overall" in data
     assert data["source"] == "online"
     assert len(data["syllables"]) == 2
+
+def test_pronunciation_assess_empty_text():
+    resp = client.post(
+        "/api/pronunciation/assess",
+        data={"reference_text": ""},
+        files={"audio_file": ("test.wav", b"RIFF....WAVEfmt ....data....", "audio/wav")},
+    )
+    assert resp.status_code == 200
+    assert len(resp.json()["syllables"]) == 0
