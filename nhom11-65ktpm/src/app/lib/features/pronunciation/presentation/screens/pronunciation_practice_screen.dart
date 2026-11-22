@@ -7,7 +7,7 @@ import '../../../../core/contracts/pronunciation_scorer.dart';
 import '../../../../core/contracts/speech_services.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass.dart';
-import '../pronunciation_providers.dart';
+import '../../pronunciation_providers.dart';
 
 /// Man hinh luyen phat am va xem phan hoi chi tiet chuan Liquid Glass UI. Chu so huu: Khanh (#15)
 class PronunciationPracticeScreen extends ConsumerStatefulWidget {

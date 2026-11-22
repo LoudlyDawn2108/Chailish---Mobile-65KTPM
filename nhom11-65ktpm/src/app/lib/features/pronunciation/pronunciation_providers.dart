@@ -4,10 +4,10 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/contracts/lesson_repository.dart';
 import '../../../core/contracts/pronunciation_scorer.dart';
 import '../../../core/contracts/speech_services.dart';
-import '../data/real_voice_recorder.dart';
-import '../engine/cedict_pinyin_service.dart';
-import '../engine/hybrid_pronunciation_scorer.dart';
-import '../engine/offline_pronunciation_engine.dart';
+import 'data/real_voice_recorder.dart';
+import 'engine/cedict_pinyin_service.dart';
+import 'engine/hybrid_pronunciation_scorer.dart';
+import 'engine/offline_pronunciation_engine.dart';
 
 final realVoiceRecorderProvider = Provider<VoiceRecorder>((ref) {
   final r = RealVoiceRecorder();
