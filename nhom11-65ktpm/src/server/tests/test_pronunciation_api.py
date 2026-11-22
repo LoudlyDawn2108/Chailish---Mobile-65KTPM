@@ -24,6 +24,14 @@ def test_pronunciation_assess_rejects_ogg():
     )
     assert resp.status_code == 400
 
+def test_pronunciation_assess_rejects_m4a():
+    resp = client.post(
+        "/api/pronunciation/assess",
+        data={"reference_text": "你好"},
+        files={"audio_file": ("audio.m4a", b"ftypM4A ....", "audio/m4a")},
+    )
+    assert resp.status_code == 400
+
 def test_pronunciation_assess_wav_mock():
     resp = client.post(
         "/api/pronunciation/assess",
