@@ -58,5 +58,15 @@ void main() {
       expect(p1.tone, 3);
       expect(p2.tone, 3);
     });
+
+    test('5. Kiem tra tach thanh mau zh, ch, sh dung quy chuan', () {
+      final zh = splitPinyin('zhōng');
+      final ch = splitPinyin('chī');
+      final sh = splitPinyin('shū');
+
+      expect(zh.initial, 'zh');
+      expect(ch.initial, 'ch');
+      expect(sh.initial, 'sh');
+    });
   });
 }
