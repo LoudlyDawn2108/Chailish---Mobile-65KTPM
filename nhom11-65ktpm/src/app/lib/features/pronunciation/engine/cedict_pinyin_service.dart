@@ -136,9 +136,12 @@ class CedictPinyinService implements PinyinService {
     // Quy tac 3: Bien dieu chu '一' (yi1):
     // - Truoc thanh 4 doc thanh yí (thanh 2)
     // - Truoc thanh 1, 2, 3 doc thanh yì (thanh 4)
+    // - O giua cum dong tu lap lai (kan yi kan) doc thanh nhe yi5
     for (var i = 0; i < n; i++) {
       if (hanziList[i] == '一') {
-        if (i < n - 1) {
+        if (i > 0 && i < n - 1 && hanziList[i - 1] == hanziList[i + 1]) {
+          pinyinList[i] = 'yi';
+        } else if (i < n - 1) {
           final next = pinyinList[i + 1];
           if (_hasTone4(next)) {
             pinyinList[i] = 'yí';
