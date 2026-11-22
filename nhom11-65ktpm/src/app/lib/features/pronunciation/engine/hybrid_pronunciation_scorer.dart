@@ -103,6 +103,8 @@ class HybridPronunciationScorer implements PronunciationScorer {
           syllables: sylScoreList,
         );
       }
+    } else {
+      debugPrint('Azure server response status code: ${resp.statusCode}');
     }
     return null;
   }
