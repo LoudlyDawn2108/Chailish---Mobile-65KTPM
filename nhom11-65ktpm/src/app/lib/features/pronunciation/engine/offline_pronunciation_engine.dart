@@ -42,13 +42,63 @@ class OfflinePronunciationEngine implements PronunciationScorer {
     required String referencePinyin,
     Recording? recording,
     String? recognizedPinyin,
+    String? recognizedText,
   }) async {
     final chars = referenceHanzi.runes
         .map(String.fromCharCode)
         .where((c) => RegExp(r'[一-鿿]').hasMatch(c))
         .toList();
     final expSyls = referencePinyin.trim().split(RegExp(r'\s+'));
-    final actSyls = (recognizedPinyin != null && recognizedPinyin.isNotEmpty)
+
+    // Neu ghi am qua ngan (< 0.4s), nguoi dung chua noi hoac chi cham nhe vao mic
+    if (recording != null && recording.duration.inMilliseconds < 400) {
+      return PronunciationResult(
+        overall: 0.0,
+        accuracy: 0.0,
+        tone: 0.0,
+        fluency: 0.0,
+        completeness: 0.0,
+        source: ScoringSource.offline,
+        recognizedText: '',
+        syllables: [
+          for (var i = 0; i < chars.length; i++)
+            SyllableScore(
+              hanzi: chars[i],
+              expected: splitPinyin(i < expSyls.length ? expSyls[i] : ''),
+              actual: null,
+              score: 0.0,
+              status: SyllableStatus.error,
+              errors: const [PronunciationError.missing],
+            ),
+        ],
+      );
+    }
+
+    // Neu co ban ghi that ma khong nhan dien duoc am tiet nao (noi tieng Viet hoac tieng khac)
+    if (recording != null && (recognizedPinyin == null || recognizedPinyin.trim().isEmpty)) {
+      return PronunciationResult(
+        overall: 20.0,
+        accuracy: 20.0,
+        tone: 20.0,
+        fluency: 30.0,
+        completeness: 0.0,
+        source: ScoringSource.offline,
+        recognizedText: recognizedText ?? '',
+        syllables: [
+          for (var i = 0; i < chars.length; i++)
+            SyllableScore(
+              hanzi: chars[i],
+              expected: splitPinyin(i < expSyls.length ? expSyls[i] : ''),
+              actual: null,
+              score: 20.0,
+              status: SyllableStatus.error,
+              errors: const [PronunciationError.missing, PronunciationError.initial],
+            ),
+        ],
+      );
+    }
+
+    final actSyls = (recognizedPinyin != null && recognizedPinyin.trim().isNotEmpty)
         ? recognizedPinyin.trim().split(RegExp(r'\s+'))
         : <String>[];
 
@@ -56,6 +106,7 @@ class OfflinePronunciationEngine implements PronunciationScorer {
     double totalScore = 0.0;
     double totalAccuracy = 0.0;
     double totalTone = 0.0;
+    int recognizedCount = 0;
 
     for (var i = 0; i < chars.length; i++) {
       final hanzi = chars[i];
@@ -66,10 +117,21 @@ class OfflinePronunciationEngine implements PronunciationScorer {
         continue;
       }
 
-      // Neu co chuoi doc that su tu nguoi hoc thi dung de can chinh
-      final SyllableParts actual = (i < actSyls.length)
-          ? splitPinyin(actSyls[i])
-          : expected;
+      final bool isMockDefault = (recording == null && actSyls.isEmpty);
+      if (!isMockDefault && i >= actSyls.length) {
+        syllablesScore.add(SyllableScore(
+          hanzi: hanzi,
+          expected: expected,
+          actual: null,
+          score: 0.0,
+          status: SyllableStatus.error,
+          errors: const [PronunciationError.missing],
+        ));
+        continue;
+      }
+
+      final SyllableParts actual = isMockDefault ? expected : splitPinyin(actSyls[i]);
+      recognizedCount++;
 
       final errors = <PronunciationError>[];
       double initialPen = 0.0;
@@ -144,14 +206,18 @@ class OfflinePronunciationEngine implements PronunciationScorer {
       }
     }
 
+    final completeness = chars.isNotEmpty
+        ? ((recognizedCount / chars.length) * 100.0).clamp(0.0, 100.0).roundToDouble()
+        : 100.0;
+
     return PronunciationResult(
       overall: avgScore,
       accuracy: avgAccuracy,
       tone: avgTone,
       fluency: fluency,
-      completeness: (chars.isNotEmpty && expSyls.isNotEmpty) ? 100.0 : 0.0,
+      completeness: completeness,
       source: ScoringSource.offline,
-      recognizedText: referenceHanzi,
+      recognizedText: recognizedText ?? (actSyls.isNotEmpty ? actSyls.join(' ') : referenceHanzi),
       syllables: syllablesScore,
     );
   }

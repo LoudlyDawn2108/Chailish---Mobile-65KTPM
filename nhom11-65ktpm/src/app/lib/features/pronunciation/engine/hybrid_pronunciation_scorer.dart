@@ -23,6 +23,8 @@ class HybridPronunciationScorer implements PronunciationScorer {
     required String referenceHanzi,
     required String referencePinyin,
     Recording? recording,
+    String? recognizedPinyin,
+    String? recognizedText,
   }) async {
     final mode = getScoringMode();
 
@@ -45,6 +47,8 @@ class HybridPronunciationScorer implements PronunciationScorer {
       referenceHanzi: referenceHanzi,
       referencePinyin: referencePinyin,
       recording: recording,
+      recognizedPinyin: recognizedPinyin,
+      recognizedText: recognizedText,
     );
   }
 
@@ -56,7 +60,8 @@ class HybridPronunciationScorer implements PronunciationScorer {
     final file = File(audioPath);
     if (!await file.exists()) return null;
 
-    final uri = Uri.parse('$serverBaseUrl/api/pronunciation/assess');
+    final baseUrl = serverBaseUrl.endsWith('/api') ? serverBaseUrl : '$serverBaseUrl/api';
+    final uri = Uri.parse('$baseUrl/pronunciation/assess');
     final req = http.MultipartRequest('POST', uri)
       ..fields['reference_text'] = referenceHanzi
       ..files.add(await http.MultipartFile.fromPath('audio_file', audioPath));

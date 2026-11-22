@@ -14,6 +14,8 @@ abstract class PronunciationScorer {
     required String referenceHanzi,
     required String referencePinyin,
     Recording? recording,
+    String? recognizedPinyin,
+    String? recognizedText,
   });
 }
 
@@ -40,6 +42,8 @@ class FakePronunciationScorer with FakeImplementation implements PronunciationSc
     required String referenceHanzi,
     required String referencePinyin,
     Recording? recording,
+    String? recognizedPinyin,
+    String? recognizedText,
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 600)); // giả độ trễ chấm
     final chars = referenceHanzi.runes.map(String.fromCharCode).where((c) => RegExp(r'[一-鿿]').hasMatch(c)).toList();

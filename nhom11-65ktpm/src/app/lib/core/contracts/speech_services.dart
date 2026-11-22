@@ -36,9 +36,12 @@ class FlutterTtsService implements TtsService {
   Future<void> speak(String text, {bool slow = false}) async {
     if (!_configured) {
       await _tts.setLanguage('zh-CN');
+      await _tts.setVolume(1.0);
+      await _tts.setPitch(1.0);
       _configured = true;
     }
     await _tts.stop();
+    await _tts.setVolume(1.0);
     await _tts.setSpeechRate(slow ? 0.3 : 0.5);
     await _tts.speak(text);
   }

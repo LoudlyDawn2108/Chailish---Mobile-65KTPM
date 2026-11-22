@@ -32,6 +32,7 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
   PronunciationResult? _result;
   double _currentAmplitude = 0.0;
   StreamSubscription<double>? _ampSub;
+  String _recognizedWords = '';
 
   @override
   void dispose() {
@@ -44,6 +45,8 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
     final tts = ref.watch(ttsServiceProvider);
     final recorder = ref.watch(realVoiceRecorderProvider);
     final scorer = ref.watch(hybridPronunciationScorerProvider);
+    final speechRecognizer = ref.watch(speechRecognizerProvider);
+    final pinyinService = ref.watch(cedictPinyinServiceProvider);
     final mode = ref.watch(scoringModeProvider);
 
     return GlassScaffold(
@@ -155,11 +158,24 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
                           _isRecording = false;
                           _isAssessing = true;
                         });
+                        try {
+                          await speechRecognizer.stop();
+                        } catch (_) {}
                         final recording = await recorder.stop();
+
+                        String recognizedPinyin = '';
+                        if (_recognizedWords.isNotEmpty) {
+                          try {
+                            recognizedPinyin = await pinyinService.toPinyin(_recognizedWords);
+                          } catch (_) {}
+                        }
+
                         final res = await scorer.assess(
                           referenceHanzi: widget.targetHanzi,
                           referencePinyin: widget.targetPinyin,
                           recording: recording,
+                          recognizedPinyin: recognizedPinyin.isNotEmpty ? recognizedPinyin : null,
+                          recognizedText: _recognizedWords.isNotEmpty ? _recognizedWords : null,
                         );
                         if (mounted) {
                           setState(() {
@@ -168,6 +184,7 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
                           });
                         }
                       } else {
+                        _recognizedWords = '';
                         final ok = await recorder.start();
                         if (ok) {
                           setState(() {
@@ -178,6 +195,17 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
                           _ampSub = recorder.amplitude.listen((amp) {
                             if (mounted) setState(() => _currentAmplitude = amp);
                           });
+                          try {
+                            await speechRecognizer.listen(
+                              onResult: (text, isFinal) {
+                                if (text.isNotEmpty) {
+                                  _recognizedWords = text;
+                                }
+                              },
+                            );
+                          } catch (e) {
+                            debugPrint('Speech recognition error: $e');
+                          }
                         }
                       }
                     },
