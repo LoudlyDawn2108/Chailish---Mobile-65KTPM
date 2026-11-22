@@ -1,11 +1,10 @@
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from typing import Optional
 import os
 import tempfile
 import json
 import httpx
 
-from app.api.deps import CurrentUser
 from app.core.config import settings
 
 router = APIRouter(prefix="/pronunciation", tags=["pronunciation"])
@@ -16,7 +15,6 @@ MAX_AUDIO_SIZE = 2 * 1024 * 1024  # 2MB
 async def assess_pronunciation(
     reference_text: str = Form(..., min_length=1),
     audio_file: UploadFile = File(...),
-    user: CurrentUser = None,
 ):
     """
     API Cham phat am truc tuyen voi Azure Speech Pronunciation Assessment (zh-CN)
