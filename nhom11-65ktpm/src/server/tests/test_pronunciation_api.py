@@ -16,6 +16,14 @@ def test_pronunciation_assess_rejects_non_wav():
     assert resp.status_code == 400
     assert "WAV" in resp.json()["detail"]
 
+def test_pronunciation_assess_rejects_ogg():
+    resp = client.post(
+        "/api/pronunciation/assess",
+        data={"reference_text": "你好"},
+        files={"audio_file": ("audio.ogg", b"OggS...", "audio/ogg")},
+    )
+    assert resp.status_code == 400
+
 def test_pronunciation_assess_wav_mock():
     resp = client.post(
         "/api/pronunciation/assess",
