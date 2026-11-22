@@ -175,4 +175,14 @@ class CedictPinyinService implements PinyinService {
         .replaceAll('ǔ', 'ú')
         .replaceAll('ǚ', 'ǘ');
   }
+
+  String removeToneMarks(String p) {
+    return p
+        .replaceAll(RegExp(r'[āáǎà]'), 'a')
+        .replaceAll(RegExp(r'[ēéěè]'), 'e')
+        .replaceAll(RegExp(r'[īíǐì]'), 'i')
+        .replaceAll(RegExp(r'[ōóǒò]'), 'o')
+        .replaceAll(RegExp(r'[ūúǔù]'), 'u')
+        .replaceAll(RegExp(r'[ǖǘǚǜ]'), 'ü');
+  }
 }
