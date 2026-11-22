@@ -251,6 +251,23 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
                     style: TextStyle(color: scoreColor, fontWeight: FontWeight.bold, fontSize: 20),
                   ),
                 ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal.shade50,
+                      foregroundColor: Colors.teal.shade800,
+                      elevation: 0,
+                    ),
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Đang tạo danh sách bài tập bổ trợ cho các âm cần cải thiện...')),
+                      );
+                    },
+                    icon: const Icon(Icons.fitness_center),
+                    label: const Text('Luyện bài tập bổ trợ'),
+                  ),
+                ),
               ],
             ),
             const Divider(height: 24),
