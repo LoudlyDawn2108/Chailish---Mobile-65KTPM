@@ -13,12 +13,13 @@ class OfflinePronunciationEngine implements PronunciationScorer {
     'c': ['ch'],
     'sh': ['s', 'x'],
     's': ['sh'],
-    'j': ['q', 'zh', 'z'],
+    'j': ['q', 'zh', 'z', 'x'],
     'q': ['ch', 'j', 'c'],
-    'x': ['s', 'sh'],
+    'x': ['s', 'sh', 'j'],
     'l': ['n'],
     'n': ['l'],
     'h': ['k'],
+    'r': ['l', 'z', 'd'],
   };
 
   // Cap van mau de nham
