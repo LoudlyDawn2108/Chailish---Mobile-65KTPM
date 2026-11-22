@@ -62,7 +62,7 @@ class HybridPronunciationScorer implements PronunciationScorer {
       ..fields['reference_text'] = referenceHanzi
       ..files.add(await http.MultipartFile.fromPath('audio_file', audioPath));
 
-    final streamed = await req.send().timeout(const Duration(seconds: 8));
+    final streamed = await req.send().timeout(const Duration(seconds: 10));
     final resp = await http.Response.fromStream(streamed);
 
     if (resp.statusCode == 200) {
