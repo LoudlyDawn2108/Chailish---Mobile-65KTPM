@@ -6,6 +6,9 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
+import '../config/app_config.dart';
+import '../../features/pronunciation/data/real_voice_recorder.dart';
+import '../../features/pronunciation/engine/cedict_pinyin_service.dart';
 import 'fake_implementation.dart';
 import 'lesson_repository.dart';
 import 'models/pronunciation.dart';
@@ -107,7 +110,13 @@ abstract class VoiceRecorder {
 }
 
 final voiceRecorderProvider = Provider<VoiceRecorder>((ref) {
-  final r = FakeVoiceRecorder();
+  if (AppConfig.fakeData) {
+    final r = FakeVoiceRecorder();
+    ref.onDispose(r.cancel);
+    return r;
+  }
+  // Su dung bo ghi am that RealVoiceRecorder (#11)
+  final r = RealVoiceRecorder();
   ref.onDispose(r.cancel);
   return r;
 });
