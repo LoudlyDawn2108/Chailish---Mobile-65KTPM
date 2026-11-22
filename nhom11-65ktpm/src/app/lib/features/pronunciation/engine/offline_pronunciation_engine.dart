@@ -129,6 +129,17 @@ class OfflinePronunciationEngine implements PronunciationScorer {
     final avgAccuracy = (totalAccuracy / n).roundToDouble();
     final avgTone = (totalTone / n).roundToDouble();
 
+    // Fluency tinh theo do dai audio neu co file ghi am
+    double fluency = 92.0;
+    if (recording != null && recording.duration.inMilliseconds > 0) {
+      final expectedDurationMs = chars.length * 600; // khoang 600ms moi am tiet
+      final actualMs = recording.duration.inMilliseconds;
+      final ratio = actualMs / expectedDurationMs;
+      if (ratio > 2.0 || ratio < 0.4) {
+        fluency = max(60.0, 92.0 - (ratio - 1.0).abs() * 20.0).roundToDouble();
+      }
+    }
+
     return PronunciationResult(
       overall: avgScore,
       accuracy: avgAccuracy,
