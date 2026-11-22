@@ -51,5 +51,12 @@ void main() {
       expect(res.fluency, greaterThan(0));
       expect(res.completeness, 100.0);
     });
+
+    test('4. Kiem tra bien dieu 2 thanh 3 (3+3 -> 2+3)', () {
+      final p1 = splitPinyin('nǐ');
+      final p2 = splitPinyin('hǎo');
+      expect(p1.tone, 3);
+      expect(p2.tone, 3);
+    });
   });
 }
