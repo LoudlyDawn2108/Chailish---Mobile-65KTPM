@@ -156,6 +156,7 @@ PathMap buildPathMap(
         id: stage.id,
         title: stage.title,
         order: stage.order,
+        level: stage.level,
         nodes: resultNodes,
       ),
     );

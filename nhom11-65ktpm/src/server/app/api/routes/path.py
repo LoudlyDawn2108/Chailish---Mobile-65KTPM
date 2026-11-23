@@ -13,7 +13,7 @@ from app.api.deps import CurrentUser, DbSession
 from app.models import EventType, PathNode
 from app.schemas.path import NodeCompleteIn, PathOut
 from app.services.path import build_path_out
-from app.services.path_logic import STATUS_LOCKED, is_passed
+from app.services.path_logic import STATUS_COMPLETED, STATUS_LOCKED, is_passed
 from app.services.progress import NewEvent, record_events
 
 router = APIRouter(prefix="/path", tags=["learning-path"])
@@ -53,7 +53,11 @@ def complete_node(
         [
             NewEvent(
                 type=EventType.QUIZ_COMPLETED,
-                xp=node.xp_reward if is_passed(body.score) else 0,
+                xp=(
+                    node.xp_reward
+                    if node_out.status != STATUS_COMPLETED and is_passed(body.score)
+                    else 0
+                ),
                 score=body.score,
                 ref_id=str(node.id),
             )
