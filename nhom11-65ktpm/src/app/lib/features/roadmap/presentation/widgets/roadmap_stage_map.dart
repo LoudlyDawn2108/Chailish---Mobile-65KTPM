@@ -1,7 +1,8 @@
-
 import 'package:flutter/material.dart';
 
 import '../../../../core/contracts/models/path.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/glass.dart';
 
 class RoadmapStageMap extends StatefulWidget {
   final PathStage stage;
@@ -50,14 +51,11 @@ class _RoadmapStageMapState extends State<RoadmapStageMap>
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 12),
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Padding(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: GlassCard(
         padding: const EdgeInsets.all(16),
+        borderRadius: BorderRadius.circular(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -71,7 +69,6 @@ class _RoadmapStageMapState extends State<RoadmapStageMap>
             ...widget.stage.nodes.asMap().entries.map((entry) {
               final index = entry.key;
               final node = entry.value;
-
               return _buildNode(context, node, index);
             }),
           ],
@@ -85,7 +82,7 @@ class _RoadmapStageMapState extends State<RoadmapStageMap>
     final color = _nodeColor(node.status);
     final isAvailable = node.status == NodeStatus.available;
 
-    final nodeButton = InkWell(
+    final button = InkWell(
       onTap: () => widget.onNodeTap(node),
       borderRadius: BorderRadius.circular(40),
       child: Container(
@@ -116,10 +113,10 @@ class _RoadmapStageMapState extends State<RoadmapStageMap>
               if (isAvailable)
                 ScaleTransition(
                   scale: _pulseAnimation,
-                  child: nodeButton,
+                  child: button,
                 )
               else
-                nodeButton,
+                button,
               const SizedBox(height: 6),
               Text(
                 node.title,
@@ -135,8 +132,8 @@ class _RoadmapStageMapState extends State<RoadmapStageMap>
                       Icons.star_rounded,
                       size: 17,
                       color: i < node.stars
-                          ? Colors.amber
-                          : Colors.grey.shade300,
+                          ? AppColors.warningOrange
+                          : AppColors.dividerLight,
                     ),
                   ),
                 ),
@@ -151,11 +148,11 @@ class _RoadmapStageMapState extends State<RoadmapStageMap>
   Color _nodeColor(NodeStatus status) {
     switch (status) {
       case NodeStatus.completed:
-        return Colors.green;
+        return AppColors.jadeGreen;
       case NodeStatus.available:
-        return Colors.blue;
+        return AppColors.infoBlue;
       case NodeStatus.locked:
-        return Colors.grey;
+        return AppColors.cloud;
     }
   }
 

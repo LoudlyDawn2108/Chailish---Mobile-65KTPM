@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/contracts/contracts.dart';
@@ -11,7 +11,7 @@ class RoadmapScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(roadmapProvider);
     return GlassScaffold(
-      appBar: GlassAppBar(title: const Text('Báº£n Äá»“ Lá»™ TrÃ¬nh HSK')),
+      appBar: GlassAppBar(title: const Text('Bản Đồ Lộ Trình HSK')),
       body: Builder(
         builder: (context) {
           final pad = MediaQuery.paddingOf(context);
@@ -24,7 +24,7 @@ class RoadmapScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'KhÃ´ng táº£i Ä‘Æ°á»£c lá»™ trÃ¬nh.\n$e',
+                  'Không tải được lộ trình.\n$e',
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -54,14 +54,14 @@ class RoadmapScreen extends ConsumerWidget {
         ..showSnackBar(
           SnackBar(
             content: Text(
-              'Äáº¡t tá»‘i thiá»ƒu $kPassScore Ä‘iá»ƒm á»Ÿ bÃ i trÆ°á»›c Ä‘á»ƒ má»Ÿ khÃ³a '
+              'Đạt tối thiểu ${kPassScore.toInt()} điểm ở bài trước để mở khóa '
               '"${node.title}"',
             ),
           ),
         );
       return;
     }
-    // TODO: khi route cá»§a Hoa (#19) cÃ³ sáºµn, Ä‘á»•i thÃ nh '/lessons/${node.lessonId}'.
+    // TODO: khi route của Hoa (#19) có sẵn, đổi thành '/lessons/${node.lessonId}'.
     context.push('/lessons');
   }
 }
