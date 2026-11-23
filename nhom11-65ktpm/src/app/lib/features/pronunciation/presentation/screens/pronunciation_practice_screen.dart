@@ -29,16 +29,17 @@ class PronunciationPracticeScreen extends ConsumerStatefulWidget {
 class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPracticeScreen> {
   bool _isRecording = false;
   bool _isAssessing = false;
+  bool _isPlayingTts = false;
   PronunciationResult? _result;
   double _currentAmplitude = 0.0;
-  StreamSubscription<double>? _ampSub;
+  double _maxAmplitudeObserved = 0.0;
   String _recognizedWords = '';
+  DateTime? _recordingStartedAt;
   Timer? _silenceTimer;
 
   @override
   void dispose() {
     _silenceTimer?.cancel();
-    _ampSub?.cancel();
     super.dispose();
   }
 
@@ -47,16 +48,25 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
     _silenceTimer = Timer(const Duration(seconds: 7), onTimeout);
   }
 
+  Future<void> _playTts(TtsService tts, {bool slow = false}) async {
+    if (_isPlayingTts) return;
+    setState(() => _isPlayingTts = true);
+    try {
+      await tts.speak(widget.targetHanzi, slow: slow);
+    } finally {
+      if (mounted) {
+        setState(() => _isPlayingTts = false);
+      }
+    }
+  }
+
   Future<void> _stopAndAssess({
-    required VoiceRecorder recorder,
     required SpeechRecognizer speechRecognizer,
     required PinyinService pinyinService,
     required PronunciationScorer scorer,
   }) async {
     _silenceTimer?.cancel();
     _silenceTimer = null;
-    _ampSub?.cancel();
-    _ampSub = null;
     setState(() {
       _isRecording = false;
       _isAssessing = true;
@@ -64,13 +74,14 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
     try {
       await speechRecognizer.stop();
     } catch (_) {}
-    final recording = await recorder.stop();
 
-    String recognizedText = _recognizedWords;
-    // Neu tren may ao STT khong tra ve chu nhung nguoi dung da thu am thuc te (>= 400ms)
-    if (recognizedText.isEmpty && recording != null && recording.duration.inMilliseconds >= 400) {
-      recognizedText = widget.targetHanzi;
-    }
+    final duration = _recordingStartedAt != null
+        ? DateTime.now().difference(_recordingStartedAt!)
+        : Duration.zero;
+    _recordingStartedAt = null;
+
+    final recording = Recording(path: null, duration: duration);
+    final recognizedText = _recognizedWords.trim();
 
     String recognizedPinyin = '';
     if (recognizedText.isNotEmpty) {
@@ -94,10 +105,41 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
     }
   }
 
+  Future<void> _simulateTestWord(
+    String recognizedText, {
+    required PinyinService pinyinService,
+    required PronunciationScorer scorer,
+  }) async {
+    setState(() {
+      _isAssessing = true;
+      _recognizedWords = recognizedText;
+    });
+
+    String recognizedPinyin = '';
+    if (recognizedText.isNotEmpty) {
+      try {
+        recognizedPinyin = await pinyinService.toPinyin(recognizedText);
+      } catch (_) {}
+    }
+
+    final res = await scorer.assess(
+      referenceHanzi: widget.targetHanzi,
+      referencePinyin: widget.targetPinyin,
+      recording: const Recording(path: null, duration: Duration(milliseconds: 1200)),
+      recognizedPinyin: recognizedPinyin.isNotEmpty ? recognizedPinyin : null,
+      recognizedText: recognizedText.isNotEmpty ? recognizedText : null,
+    );
+    if (mounted) {
+      setState(() {
+        _result = res;
+        _isAssessing = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final tts = ref.watch(ttsServiceProvider);
-    final recorder = ref.watch(realVoiceRecorderProvider);
     final scorer = ref.watch(hybridPronunciationScorerProvider);
     final speechRecognizer = ref.watch(speechRecognizerProvider);
     final pinyinService = ref.watch(cedictPinyinServiceProvider);
@@ -154,12 +196,12 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
                     alignment: WrapAlignment.center,
                     children: [
                       GlassButton(
-                        onPressed: () => tts.speak(widget.targetHanzi),
-                        icon: Icons.volume_up,
-                        label: 'Nghe mẫu',
+                        onPressed: _isPlayingTts ? null : () => _playTts(tts),
+                        icon: _isPlayingTts ? Icons.graphic_eq : Icons.volume_up,
+                        label: _isPlayingTts ? 'Đang đọc...' : 'Nghe mẫu',
                       ),
                       GlassButton(
-                        onPressed: () => tts.speak(widget.targetHanzi, slow: true),
+                        onPressed: _isPlayingTts ? null : () => _playTts(tts, slow: true),
                         icon: Icons.speed,
                         label: 'Đọc chậm',
                       ),
@@ -289,50 +331,55 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
                   : () async {
                       if (_isRecording) {
                         await _stopAndAssess(
-                          recorder: recorder,
                           speechRecognizer: speechRecognizer,
                           pinyinService: pinyinService,
                           scorer: scorer,
                         );
                       } else {
                         _recognizedWords = '';
-                        final ok = await recorder.start();
-                        if (ok) {
-                          setState(() {
-                            _isRecording = true;
-                            _result = null;
-                          });
-                          _ampSub?.cancel();
-                          _ampSub = recorder.amplitude.listen((amp) {
-                            if (mounted) setState(() => _currentAmplitude = amp);
-                          });
+                        _maxAmplitudeObserved = 0.0;
+                        _recordingStartedAt = DateTime.now();
 
-                          // Tu dong dung va cham diem sau 7 giay neu quen bam dung
-                          _startSilenceTimer(
-                            onTimeout: () => _stopAndAssess(
-                              recorder: recorder,
-                              speechRecognizer: speechRecognizer,
-                              pinyinService: pinyinService,
-                              scorer: scorer,
-                            ),
+                        setState(() {
+                          _isRecording = true;
+                          _result = null;
+                          _currentAmplitude = 0.15;
+                        });
+
+                        // Tu dong dung va cham diem sau 7 giay neu quen bam dung
+                        _startSilenceTimer(
+                          onTimeout: () => _stopAndAssess(
+                            speechRecognizer: speechRecognizer,
+                            pinyinService: pinyinService,
+                            scorer: scorer,
+                          ),
+                        );
+
+                        try {
+                          await speechRecognizer.listen(
+                            onResult: (text, isFinal) {
+                              if (text.isNotEmpty && mounted) {
+                                setState(() {
+                                  _recognizedWords = text;
+                                });
+                              }
+                            },
+                            onSoundLevel: (amp) {
+                              if (mounted) {
+                                setState(() {
+                                  _currentAmplitude = amp;
+                                  if (amp > _maxAmplitudeObserved) {
+                                    _maxAmplitudeObserved = amp;
+                                  }
+                                });
+                              }
+                            },
+                            onError: (error) {
+                              debugPrint('STT notice on emulator: $error');
+                            },
                           );
-
-                          try {
-                            await speechRecognizer.listen(
-                              onResult: (text, isFinal) {
-                                if (text.isNotEmpty && mounted) {
-                                  setState(() {
-                                    _recognizedWords = text;
-                                  });
-                                }
-                              },
-                              onError: (error) {
-                                debugPrint('STT notice on emulator: $error');
-                              },
-                            );
-                          } catch (e) {
-                            debugPrint('Speech recognition error: $e');
-                          }
+                        } catch (e) {
+                          debugPrint('Speech recognition error: $e');
                         }
                       }
                     },
@@ -363,6 +410,32 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
               _isRecording ? 'Bấm để dừng và chấm điểm' : 'Bấm micro để bắt đầu nói',
               style: const TextStyle(color: AppColors.cloud, fontSize: 13),
             ),
+
+            if (!_isRecording) ...[
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                alignment: WrapAlignment.center,
+                children: [
+                  ActionChip(
+                    avatar: const Icon(Icons.check_circle_outline, size: 16, color: AppColors.jadeGreen),
+                    label: const Text('Thử: 你好 (Chuẩn 100đ)', style: TextStyle(fontSize: 12)),
+                    onPressed: () => _simulateTestWord('你好', pinyinService: pinyinService, scorer: scorer),
+                  ),
+                  ActionChip(
+                    avatar: const Icon(Icons.remove_circle_outline, size: 16, color: AppColors.warningOrange),
+                    label: const Text('Thử: 你 (Thiếu 50đ)', style: TextStyle(fontSize: 12)),
+                    onPressed: () => _simulateTestWord('你', pinyinService: pinyinService, scorer: scorer),
+                  ),
+                  ActionChip(
+                    avatar: const Icon(Icons.cancel_outlined, size: 16, color: AppColors.errorRed),
+                    label: const Text('Thử: 谢谢 (Lệch từ 0đ)', style: TextStyle(fontSize: 12)),
+                    onPressed: () => _simulateTestWord('谢谢', pinyinService: pinyinService, scorer: scorer),
+                  ),
+                ],
+              ),
+            ],
 
             if (_isAssessing) ...[
               const SizedBox(height: 24),

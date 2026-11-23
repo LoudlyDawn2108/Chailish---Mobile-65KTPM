@@ -119,7 +119,11 @@ class FakeSpeechInput implements ChatSpeechInput {
   Future<bool> initialize() async => true;
 
   @override
-  Future<void> listen({required void Function(String text, bool isFinal) onResult, void Function(String error)? onError}) async {
+  Future<void> listen({
+    required void Function(String text, bool isFinal) onResult,
+    void Function(double level)? onSoundLevel,
+    void Function(String error)? onError,
+  }) async {
     _onResult = onResult;
   }
 

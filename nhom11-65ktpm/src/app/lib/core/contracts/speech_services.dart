@@ -32,14 +32,19 @@ final ttsServiceProvider = Provider<TtsService>((ref) {
 class FlutterTtsService implements TtsService {
   final FlutterTts _tts = FlutterTts();
   bool _configured = false;
+  bool _isSpeaking = false;
 
   Future<void> _ensureInit() async {
     if (_configured) return;
     try {
       await _tts.setLanguage('zh-CN');
       await _tts.setVolume(1.0);
-      await _tts.setPitch(1.0); // Giu 1.0 de triet tieu tieng no lop dop do bo loc DSP gay ra
-      await _tts.setSpeechRate(0.48);
+      await _tts.setPitch(1.0); // Giu 1.0 nguyen ban de khong bi meo tieng hoac no DSP
+      await _tts.setSpeechRate(0.45); // Toc do ly tuong giup phat am ro, vang va to hon
+      await _tts.awaitSpeakCompletion(true);
+      try {
+        await _tts.setQueueMode(0); // QUEUE_FLUSH
+      } catch (_) {}
       _configured = true;
     } catch (_) {}
   }
@@ -47,17 +52,36 @@ class FlutterTtsService implements TtsService {
   @override
   Future<void> speak(String text, {bool slow = false}) async {
     await _ensureInit();
+    if (_isSpeaking) {
+      try {
+        await _tts.stop();
+        await Future<void>.delayed(const Duration(milliseconds: 60));
+      } catch (_) {}
+    }
+    _isSpeaking = true;
     try {
-      await _tts.setSpeechRate(slow ? 0.32 : 0.48);
-      // Khong goi stop() ngay truoc speak de tranh lam AudioTrack bi giat/no DAC
-      await _tts.speak(text);
+      await _tts.setSpeechRate(slow ? 0.30 : 0.45);
+      // Chen dau cham cau tieng Trung 。 de bo tong hop am thanh tu dong ha bien do ve 0 (khong bi giat/no o cuoi)
+      final clean = text.trim();
+      final conditioned = clean.endsWith('。') || clean.endsWith('？') || clean.endsWith('！')
+          ? clean
+          : '$clean。';
+      // Chen khoang trang o dau de khoi tao AudioTrack DAC voi mau 0 truoc khi phat am
+      await _tts.speak(' $conditioned');
     } catch (e) {
       debugPrint('TTS speak error: $e');
+    } finally {
+      _isSpeaking = false;
     }
   }
 
   @override
-  Future<void> stop() => _tts.stop();
+  Future<void> stop() async {
+    _isSpeaking = false;
+    try {
+      await _tts.stop();
+    } catch (_) {}
+  }
 }
 
 // ─────────────────────────────── Nhận dạng giọng nói · Chủ sở hữu: Khánh (#11)
@@ -68,6 +92,7 @@ abstract class SpeechRecognizer {
 
   Future<void> listen({
     required void Function(String text, bool isFinal) onResult,
+    void Function(double level)? onSoundLevel,
     void Function(String error)? onError,
   });
 
@@ -106,6 +131,7 @@ class SpeechToTextRecognizer implements SpeechRecognizer {
   @override
   Future<void> listen({
     required void Function(String text, bool isFinal) onResult,
+    void Function(double level)? onSoundLevel,
     void Function(String error)? onError,
   }) async {
     _currentOnError = onError;
@@ -126,11 +152,18 @@ class SpeechToTextRecognizer implements SpeechRecognizer {
     try {
       await _speech.listen(
         onResult: (SpeechRecognitionResult result) => onResult(result.recognizedWords, result.finalResult),
+        onSoundLevelChange: onSoundLevel != null
+            ? (level) {
+                // Bien do tra ve thuong tu -2 dB den 10 dB tuy thuoc thiet bi
+                final normalized = level <= 0 ? 0.08 : (level / 10.0).clamp(0.08, 1.0);
+                onSoundLevel(normalized);
+              }
+            : null,
         listenOptions: SpeechListenOptions(
           localeId: targetLocale,
           partialResults: true,
           cancelOnError: false,
-          listenMode: ListenMode.dictation,
+          listenMode: ListenMode.confirmation,
         ),
       );
     } catch (e) {
