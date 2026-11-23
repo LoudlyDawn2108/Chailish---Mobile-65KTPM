@@ -33,20 +33,27 @@ class FlutterTtsService implements TtsService {
   final FlutterTts _tts = FlutterTts();
   bool _configured = false;
 
-  @override
-  Future<void> speak(String text, {bool slow = false}) async {
-    if (!_configured) {
+  Future<void> _ensureInit() async {
+    if (_configured) return;
+    try {
       await _tts.setLanguage('zh-CN');
       await _tts.setVolume(1.0);
-      await _tts.setPitch(1.05);
-      await _tts.awaitSpeakCompletion(true);
+      await _tts.setPitch(1.0); // Giu 1.0 de triet tieu tieng no lop dop do bo loc DSP gay ra
+      await _tts.setSpeechRate(0.48);
       _configured = true;
+    } catch (_) {}
+  }
+
+  @override
+  Future<void> speak(String text, {bool slow = false}) async {
+    await _ensureInit();
+    try {
+      await _tts.setSpeechRate(slow ? 0.32 : 0.48);
+      // Khong goi stop() ngay truoc speak de tranh lam AudioTrack bi giat/no DAC
+      await _tts.speak(text);
+    } catch (e) {
+      debugPrint('TTS speak error: $e');
     }
-    await _tts.stop();
-    await _tts.setVolume(1.0);
-    await _tts.setPitch(1.05);
-    await _tts.setSpeechRate(slow ? 0.35 : 0.52);
-    await _tts.speak(text);
   }
 
   @override

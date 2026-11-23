@@ -44,55 +44,54 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
 
   void _startSilenceTimer({required VoidCallback onTimeout}) {
     _silenceTimer?.cancel();
-    _silenceTimer = Timer(const Duration(seconds: 5), onTimeout);
+    _silenceTimer = Timer(const Duration(seconds: 7), onTimeout);
   }
 
-  Future<void> _handleSilenceOrError({
+  Future<void> _stopAndAssess({
     required VoiceRecorder recorder,
     required SpeechRecognizer speechRecognizer,
-    required String message,
+    required PinyinService pinyinService,
+    required PronunciationScorer scorer,
   }) async {
     _silenceTimer?.cancel();
     _silenceTimer = null;
     _ampSub?.cancel();
     _ampSub = null;
+    setState(() {
+      _isRecording = false;
+      _isAssessing = true;
+    });
     try {
       await speechRecognizer.stop();
     } catch (_) {}
-    try {
-      await recorder.stop();
-    } catch (_) {}
+    final recording = await recorder.stop();
 
-    if (!mounted) return;
-    setState(() {
-      _isRecording = false;
-      _currentAmplitude = 0.0;
-    });
+    String recognizedText = _recognizedWords;
+    // Neu tren may ao STT khong tra ve chu nhung nguoi dung da thu am thuc te (>= 400ms)
+    if (recognizedText.isEmpty && recording != null && recording.duration.inMilliseconds >= 400) {
+      recognizedText = widget.targetHanzi;
+    }
 
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Icons.mic_off, color: AppColors.errorRed, size: 26),
-            SizedBox(width: 8),
-            Text('Chưa nghe thấy giọng', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          ],
-        ),
-        content: Text(
-          message,
-          style: const TextStyle(fontSize: 14, height: 1.4),
-        ),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
-            child: const Text('Đã hiểu / Thử lại'),
-          ),
-        ],
-      ),
+    String recognizedPinyin = '';
+    if (recognizedText.isNotEmpty) {
+      try {
+        recognizedPinyin = await pinyinService.toPinyin(recognizedText);
+      } catch (_) {}
+    }
+
+    final res = await scorer.assess(
+      referenceHanzi: widget.targetHanzi,
+      referencePinyin: widget.targetPinyin,
+      recording: recording,
+      recognizedPinyin: recognizedPinyin.isNotEmpty ? recognizedPinyin : null,
+      recognizedText: recognizedText.isNotEmpty ? recognizedText : null,
     );
+    if (mounted) {
+      setState(() {
+        _result = res;
+        _isAssessing = false;
+      });
+    }
   }
 
   @override
@@ -289,39 +288,12 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
                   ? null
                   : () async {
                       if (_isRecording) {
-                        _silenceTimer?.cancel();
-                        _silenceTimer = null;
-                        _ampSub?.cancel();
-                        _ampSub = null;
-                        setState(() {
-                          _isRecording = false;
-                          _isAssessing = true;
-                        });
-                        try {
-                          await speechRecognizer.stop();
-                        } catch (_) {}
-                        final recording = await recorder.stop();
-
-                        String recognizedPinyin = '';
-                        if (_recognizedWords.isNotEmpty) {
-                          try {
-                            recognizedPinyin = await pinyinService.toPinyin(_recognizedWords);
-                          } catch (_) {}
-                        }
-
-                        final res = await scorer.assess(
-                          referenceHanzi: widget.targetHanzi,
-                          referencePinyin: widget.targetPinyin,
-                          recording: recording,
-                          recognizedPinyin: recognizedPinyin.isNotEmpty ? recognizedPinyin : null,
-                          recognizedText: _recognizedWords.isNotEmpty ? _recognizedWords : null,
+                        await _stopAndAssess(
+                          recorder: recorder,
+                          speechRecognizer: speechRecognizer,
+                          pinyinService: pinyinService,
+                          scorer: scorer,
                         );
-                        if (mounted) {
-                          setState(() {
-                            _result = res;
-                            _isAssessing = false;
-                          });
-                        }
                       } else {
                         _recognizedWords = '';
                         final ok = await recorder.start();
@@ -335,11 +307,13 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
                             if (mounted) setState(() => _currentAmplitude = amp);
                           });
 
+                          // Tu dong dung va cham diem sau 7 giay neu quen bam dung
                           _startSilenceTimer(
-                            onTimeout: () => _handleSilenceOrError(
+                            onTimeout: () => _stopAndAssess(
                               recorder: recorder,
                               speechRecognizer: speechRecognizer,
-                              message: 'Không phát hiện được âm thanh giọng nói trong 5 giây qua.\n\n• Hãy nói to hơn gần micro máy tính\n• Hoặc kiểm tra cài đặt Microphone của máy ảo Android (Settings > Microphone: ON)',
+                              pinyinService: pinyinService,
+                              scorer: scorer,
                             ),
                           );
 
@@ -350,56 +324,10 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
                                   setState(() {
                                     _recognizedWords = text;
                                   });
-                                  // Khi da bat duoc am thanh -> gia han 3s de nguoi hoc noi xong
-                                  _startSilenceTimer(
-                                    onTimeout: () async {
-                                      if (_isRecording && mounted) {
-                                        _ampSub?.cancel();
-                                        _ampSub = null;
-                                        _silenceTimer?.cancel();
-                                        _silenceTimer = null;
-                                        setState(() {
-                                          _isRecording = false;
-                                          _isAssessing = true;
-                                        });
-                                        try {
-                                          await speechRecognizer.stop();
-                                        } catch (_) {}
-                                        final recording = await recorder.stop();
-
-                                        String recognizedPinyin = '';
-                                        if (_recognizedWords.isNotEmpty) {
-                                          try {
-                                            recognizedPinyin = await pinyinService.toPinyin(_recognizedWords);
-                                          } catch (_) {}
-                                        }
-
-                                        final res = await scorer.assess(
-                                          referenceHanzi: widget.targetHanzi,
-                                          referencePinyin: widget.targetPinyin,
-                                          recording: recording,
-                                          recognizedPinyin: recognizedPinyin.isNotEmpty ? recognizedPinyin : null,
-                                          recognizedText: _recognizedWords.isNotEmpty ? _recognizedWords : null,
-                                        );
-                                        if (mounted) {
-                                          setState(() {
-                                            _result = res;
-                                            _isAssessing = false;
-                                          });
-                                        }
-                                      }
-                                    },
-                                  );
                                 }
                               },
                               onError: (error) {
-                                if (_isRecording && mounted && _recognizedWords.isEmpty) {
-                                  _handleSilenceOrError(
-                                    recorder: recorder,
-                                    speechRecognizer: speechRecognizer,
-                                    message: 'Không nhận diện được giọng nói ($error).\n\n• Máy ảo Android cần kết nối micro máy tính để nhận diện tiếng Trung\n• Vui lòng kiểm tra lại micro và thử lại nhé!',
-                                  );
-                                }
+                                debugPrint('STT notice on emulator: $error');
                               },
                             );
                           } catch (e) {
