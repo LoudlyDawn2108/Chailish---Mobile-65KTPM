@@ -74,13 +74,13 @@ class OfflinePronunciationEngine implements PronunciationScorer {
       );
     }
 
-    // Neu co ban ghi that ma khong nhan dien duoc am tiet nao (noi tieng Viet hoac tieng khac)
+    // Neu co ban ghi that ma khong nhan dien duoc am tiet nao (im lang hoac noi tieng khac)
     if (recording != null && (recognizedPinyin == null || recognizedPinyin.trim().isEmpty)) {
       return PronunciationResult(
-        overall: 20.0,
-        accuracy: 20.0,
-        tone: 20.0,
-        fluency: 30.0,
+        overall: 0.0,
+        accuracy: 0.0,
+        tone: 0.0,
+        fluency: 0.0,
         completeness: 0.0,
         source: ScoringSource.offline,
         recognizedText: recognizedText ?? '',
@@ -90,9 +90,9 @@ class OfflinePronunciationEngine implements PronunciationScorer {
               hanzi: chars[i],
               expected: splitPinyin(i < expSyls.length ? expSyls[i] : ''),
               actual: null,
-              score: 20.0,
+              score: 0.0,
               status: SyllableStatus.error,
-              errors: const [PronunciationError.missing, PronunciationError.initial],
+              errors: const [PronunciationError.missing],
             ),
         ],
       );
@@ -165,16 +165,30 @@ class OfflinePronunciationEngine implements PronunciationScorer {
         }
       }
 
-      final wordPenalty = initialPen * 0.35 + finalPen * 0.35 + tonePen * 0.30;
-      final score = max(0.0, 100.0 - wordPenalty);
-      final acc = max(0.0, 100.0 - (initialPen + finalPen));
-      final toneSc = max(0.0, 100.0 - tonePen * 2.0);
+      double score;
+      double acc;
+      double toneSc;
+      SyllableStatus status;
 
-      SyllableStatus status = SyllableStatus.ok;
-      if (score < 60) {
+      // Neu ca thanh mau va van mau deu sai hoan toan (khong he phat am dung am tiet nay)
+      if (initialPen >= 40.0 && finalPen >= 40.0) {
+        score = 0.0;
+        acc = 0.0;
+        toneSc = 0.0;
         status = SyllableStatus.error;
-      } else if (score < 80) {
-        status = SyllableStatus.warn;
+      } else {
+        final wordPenalty = initialPen * 0.45 + finalPen * 0.45 + tonePen * 0.30;
+        score = max(0.0, 100.0 - wordPenalty);
+        acc = max(0.0, 100.0 - (initialPen + finalPen));
+        toneSc = max(0.0, 100.0 - tonePen * 2.0);
+
+        if (score < 60) {
+          status = SyllableStatus.error;
+        } else if (score < 80) {
+          status = SyllableStatus.warn;
+        } else {
+          status = SyllableStatus.ok;
+        }
       }
 
       syllablesScore.add(SyllableScore(

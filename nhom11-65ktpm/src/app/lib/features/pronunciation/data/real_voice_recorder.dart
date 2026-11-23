@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
@@ -56,16 +57,21 @@ class RealVoiceRecorder implements VoiceRecorder {
       await _recorder.start(config, path: _currentPath!);
 
       _ampSub?.cancel();
+      var waveTick = 0;
       _ampSub = Stream.periodic(const Duration(milliseconds: 60))
           .asyncMap((_) => _recorder.getAmplitude())
           .listen((amp) {
         final db = amp.current;
-        if (db < -50) {
-          _amp.add(0.05);
-        } else if (db > 0) {
+        waveTick++;
+        // Tao nhip song am giao dong sinh dong ke ca tren mic gia lap / moi truong im lang (db <= -45)
+        final waveOsc = 0.22 + 0.12 * sin(waveTick * 0.35) + 0.06 * cos(waveTick * 0.7);
+        if (db <= -45) {
+          _amp.add(waveOsc.clamp(0.1, 0.45));
+        } else if (db >= 0) {
           _amp.add(1.0);
         } else {
-          _amp.add(((db + 50) / 50).clamp(0.05, 1.0));
+          final realAmp = ((db + 45) / 45).clamp(0.15, 1.0);
+          _amp.add(max(waveOsc * 0.5, realAmp).clamp(0.1, 1.0));
         }
       });
 

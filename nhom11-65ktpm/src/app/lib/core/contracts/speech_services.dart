@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
@@ -37,12 +38,14 @@ class FlutterTtsService implements TtsService {
     if (!_configured) {
       await _tts.setLanguage('zh-CN');
       await _tts.setVolume(1.0);
-      await _tts.setPitch(1.0);
+      await _tts.setPitch(1.05);
+      await _tts.awaitSpeakCompletion(true);
       _configured = true;
     }
     await _tts.stop();
     await _tts.setVolume(1.0);
-    await _tts.setSpeechRate(slow ? 0.3 : 0.5);
+    await _tts.setPitch(1.05);
+    await _tts.setSpeechRate(slow ? 0.35 : 0.52);
     await _tts.speak(text);
   }
 
@@ -56,7 +59,10 @@ class FlutterTtsService implements TtsService {
 abstract class SpeechRecognizer {
   Future<bool> initialize();
 
-  Future<void> listen({required void Function(String text, bool isFinal) onResult});
+  Future<void> listen({
+    required void Function(String text, bool isFinal) onResult,
+    void Function(String error)? onError,
+  });
 
   Future<void> stop();
 }
@@ -70,25 +76,69 @@ final speechRecognizerProvider = Provider<SpeechRecognizer>((ref) {
 class SpeechToTextRecognizer implements SpeechRecognizer {
   final SpeechToText _speech = SpeechToText();
   bool _ready = false;
+  void Function(String error)? _currentOnError;
 
   @override
   Future<bool> initialize() async {
     if (_ready) return true;
-    _ready = await _speech.initialize();
+    try {
+      _ready = await _speech.initialize(
+        onError: (e) {
+          debugPrint('STT error: ${e.errorMsg} permanent: ${e.permanent}');
+          _currentOnError?.call(e.errorMsg);
+        },
+        onStatus: (s) => debugPrint('STT status: $s'),
+      );
+    } catch (e) {
+      debugPrint('STT initialize exception: $e');
+      _ready = false;
+    }
     return _ready;
   }
 
   @override
-  Future<void> listen({required void Function(String text, bool isFinal) onResult}) async {
-    if (!await initialize()) return;
-    await _speech.listen(
-      onResult: (SpeechRecognitionResult result) => onResult(result.recognizedWords, result.finalResult),
-      listenOptions: SpeechListenOptions(localeId: 'zh_CN', partialResults: true, cancelOnError: true),
-    );
+  Future<void> listen({
+    required void Function(String text, bool isFinal) onResult,
+    void Function(String error)? onError,
+  }) async {
+    _currentOnError = onError;
+    if (!await initialize()) {
+      onError?.call('Không thể khởi tạo bộ nhận dạng giọng nói');
+      return;
+    }
+    String targetLocale = 'zh-CN';
+    try {
+      final locales = await _speech.locales();
+      final zhLocale = locales.firstWhere(
+        (l) => l.localeId.toLowerCase().startsWith('zh') || l.localeId.toLowerCase().startsWith('cmn'),
+        orElse: () => LocaleName('zh-CN', 'Chinese'),
+      );
+      targetLocale = zhLocale.localeId;
+    } catch (_) {}
+
+    try {
+      await _speech.listen(
+        onResult: (SpeechRecognitionResult result) => onResult(result.recognizedWords, result.finalResult),
+        listenOptions: SpeechListenOptions(
+          localeId: targetLocale,
+          partialResults: true,
+          cancelOnError: false,
+          listenMode: ListenMode.dictation,
+        ),
+      );
+    } catch (e) {
+      debugPrint('STT listen error: $e');
+      onError?.call(e.toString());
+    }
   }
 
   @override
-  Future<void> stop() => _speech.stop();
+  Future<void> stop() async {
+    _currentOnError = null;
+    try {
+      await _speech.stop();
+    } catch (_) {}
+  }
 }
 
 // ─────────────────────────────────────────── Ghi âm · Chủ sở hữu: Khánh (#11)

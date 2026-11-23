@@ -33,11 +33,66 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
   double _currentAmplitude = 0.0;
   StreamSubscription<double>? _ampSub;
   String _recognizedWords = '';
+  Timer? _silenceTimer;
 
   @override
   void dispose() {
+    _silenceTimer?.cancel();
     _ampSub?.cancel();
     super.dispose();
+  }
+
+  void _startSilenceTimer({required VoidCallback onTimeout}) {
+    _silenceTimer?.cancel();
+    _silenceTimer = Timer(const Duration(seconds: 5), onTimeout);
+  }
+
+  Future<void> _handleSilenceOrError({
+    required VoiceRecorder recorder,
+    required SpeechRecognizer speechRecognizer,
+    required String message,
+  }) async {
+    _silenceTimer?.cancel();
+    _silenceTimer = null;
+    _ampSub?.cancel();
+    _ampSub = null;
+    try {
+      await speechRecognizer.stop();
+    } catch (_) {}
+    try {
+      await recorder.stop();
+    } catch (_) {}
+
+    if (!mounted) return;
+    setState(() {
+      _isRecording = false;
+      _currentAmplitude = 0.0;
+    });
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.mic_off, color: AppColors.errorRed, size: 26),
+            SizedBox(width: 8),
+            Text('Chưa nghe thấy giọng', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Text(
+          message,
+          style: const TextStyle(fontSize: 14, height: 1.4),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+            child: const Text('Đã hiểu / Thử lại'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -114,31 +169,113 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
+
+            // Hop hien thi truc tiep giong noi theo thoi gian thuc
+            if (_isRecording || _recognizedWords.isNotEmpty)
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: _recognizedWords.isNotEmpty
+                      ? AppColors.jadeGreen.withValues(alpha: 0.12)
+                      : AppColors.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: _recognizedWords.isNotEmpty
+                        ? AppColors.jadeGreen
+                        : AppColors.primary.withValues(alpha: 0.3),
+                    width: 1.5,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          _recognizedWords.isNotEmpty ? Icons.record_voice_over : Icons.hearing,
+                          color: _recognizedWords.isNotEmpty ? AppColors.jadeGreen : AppColors.primary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _recognizedWords.isNotEmpty ? 'ĐÃ NHẬN DIỆN ĐƯỢC' : 'ĐANG LẮNG NGHE GIỌNG BẠN...',
+                          style: TextStyle(
+                            color: _recognizedWords.isNotEmpty ? AppColors.jadeGreen : AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _recognizedWords.isNotEmpty
+                          ? '"$_recognizedWords"'
+                          : 'Hãy đọc to từ: ${widget.targetHanzi} (${widget.targetPinyin})',
+                      style: TextStyle(
+                        fontSize: _recognizedWords.isNotEmpty ? 24 : 14,
+                        fontWeight: _recognizedWords.isNotEmpty ? FontWeight.bold : FontWeight.normal,
+                        color: _recognizedWords.isNotEmpty ? AppColors.slate : AppColors.cloud,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
 
             if (_isRecording)
               Container(
-                height: 48,
+                height: 54,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
                   color: AppColors.errorRed.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(27),
+                  border: Border.all(color: AppColors.errorRed.withValues(alpha: 0.4)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(Icons.mic, color: AppColors.errorRed),
-                    const SizedBox(width: 8),
-                    const Text('Đang ghi âm...', style: TextStyle(color: AppColors.errorRed, fontWeight: FontWeight.bold)),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: _currentAmplitude,
-                          backgroundColor: AppColors.errorRed.withValues(alpha: 0.2),
-                          color: AppColors.errorRed,
-                        ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Text(
+                                'Đang thu âm...',
+                                style: TextStyle(color: AppColors.errorRed, fontWeight: FontWeight.bold, fontSize: 13),
+                              ),
+                              if (_recognizedWords.isNotEmpty) ...[
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    ': "$_recognizedWords"',
+                                    style: const TextStyle(color: AppColors.slate, fontSize: 12, fontWeight: FontWeight.w600),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 5),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: _currentAmplitude,
+                              backgroundColor: AppColors.errorRed.withValues(alpha: 0.2),
+                              color: AppColors.errorRed,
+                              minHeight: 6,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -152,6 +289,8 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
                   ? null
                   : () async {
                       if (_isRecording) {
+                        _silenceTimer?.cancel();
+                        _silenceTimer = null;
                         _ampSub?.cancel();
                         _ampSub = null;
                         setState(() {
@@ -195,11 +334,71 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
                           _ampSub = recorder.amplitude.listen((amp) {
                             if (mounted) setState(() => _currentAmplitude = amp);
                           });
+
+                          _startSilenceTimer(
+                            onTimeout: () => _handleSilenceOrError(
+                              recorder: recorder,
+                              speechRecognizer: speechRecognizer,
+                              message: 'Không phát hiện được âm thanh giọng nói trong 5 giây qua.\n\n• Hãy nói to hơn gần micro máy tính\n• Hoặc kiểm tra cài đặt Microphone của máy ảo Android (Settings > Microphone: ON)',
+                            ),
+                          );
+
                           try {
                             await speechRecognizer.listen(
                               onResult: (text, isFinal) {
-                                if (text.isNotEmpty) {
-                                  _recognizedWords = text;
+                                if (text.isNotEmpty && mounted) {
+                                  setState(() {
+                                    _recognizedWords = text;
+                                  });
+                                  // Khi da bat duoc am thanh -> gia han 3s de nguoi hoc noi xong
+                                  _startSilenceTimer(
+                                    onTimeout: () async {
+                                      if (_isRecording && mounted) {
+                                        _ampSub?.cancel();
+                                        _ampSub = null;
+                                        _silenceTimer?.cancel();
+                                        _silenceTimer = null;
+                                        setState(() {
+                                          _isRecording = false;
+                                          _isAssessing = true;
+                                        });
+                                        try {
+                                          await speechRecognizer.stop();
+                                        } catch (_) {}
+                                        final recording = await recorder.stop();
+
+                                        String recognizedPinyin = '';
+                                        if (_recognizedWords.isNotEmpty) {
+                                          try {
+                                            recognizedPinyin = await pinyinService.toPinyin(_recognizedWords);
+                                          } catch (_) {}
+                                        }
+
+                                        final res = await scorer.assess(
+                                          referenceHanzi: widget.targetHanzi,
+                                          referencePinyin: widget.targetPinyin,
+                                          recording: recording,
+                                          recognizedPinyin: recognizedPinyin.isNotEmpty ? recognizedPinyin : null,
+                                          recognizedText: _recognizedWords.isNotEmpty ? _recognizedWords : null,
+                                        );
+                                        if (mounted) {
+                                          setState(() {
+                                            _result = res;
+                                            _isAssessing = false;
+                                          });
+                                        }
+                                      }
+                                    },
+                                  );
+                                }
+                              },
+                              onError: (error) {
+                                if (_isRecording && mounted && _recognizedWords.isEmpty) {
+                                  _handleSilenceOrError(
+                                    recorder: recorder,
+                                    speechRecognizer: speechRecognizer,
+                                    message: 'Không nhận diện được giọng nói ($error).\n\n• Máy ảo Android cần kết nối micro máy tính để nhận diện tiếng Trung\n• Vui lòng kiểm tra lại micro và thử lại nhé!',
+                                  );
                                 }
                               },
                             );
@@ -294,6 +493,50 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
             ],
           ),
           const Divider(height: 24),
+          if (res.overall == 0) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.errorRed.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.errorRed.withValues(alpha: 0.3)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.mic_off, color: AppColors.errorRed, size: 20),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Chưa nhận diện được phát âm tiếng Trung. Hãy thử nói to hơn gần micro máy tính hoặc kiểm tra cài đặt mic của máy ảo!',
+                      style: TextStyle(color: AppColors.errorRed, fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ] else if (res.recognizedText.isNotEmpty && res.recognizedText != widget.targetHanzi) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.record_voice_over, color: AppColors.primary, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Âm nhận diện được: "${res.recognizedText}"',
+                      style: const TextStyle(fontSize: 13, color: AppColors.slate, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -316,12 +559,12 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
 
               return ActionChip(
                 avatar: CircleAvatar(backgroundColor: chipColor, radius: 6),
-                label: Text('${s.hanzi} (${s.expected.initial}${s.expected.finalPart}${s.expected.tone})'),
+                label: Text('${s.hanzi} (${s.expected.initial}${s.expected.finalPart}${s.expected.tone}) - ${s.score.toInt()}đ'),
                 backgroundColor: chipColor.withValues(alpha: 0.1),
                 onPressed: () {
                   final errStr = s.errors.isEmpty ? 'Phát âm chuẩn xác!' : 'Cần chú ý lỗi: ${s.errors.map((e) => e.name).join(", ")}';
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${s.hanzi}: $errStr')),
+                    SnackBar(content: Text('${s.hanzi}: $errStr (${s.score.toInt()} điểm)')),
                   );
                 },
               );
