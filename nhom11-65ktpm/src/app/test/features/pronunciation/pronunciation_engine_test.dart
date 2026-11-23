@@ -76,5 +76,35 @@ void main() {
       expect(ma.tone, 5);
       expect(de.tone, 5);
     });
+
+    test('7. Phat hien bat loi thanh dieu khi doc sai dau (ni hao, ni hao, ni hao)', () async {
+      // Test ni háo: sai ca 2 thanh (thanh 5 + thanh 2 so voi thanh 3 + thanh 3)
+      final resNiHao = await scorer.assess(
+        referenceHanzi: '你好',
+        referencePinyin: 'nǐ hǎo',
+        recognizedPinyin: 'ni háo',
+      );
+      expect(resNiHao.overall, lessThan(80));
+      expect(resNiHao.syllables[0].errors.contains(PronunciationError.tone), isTrue);
+      expect(resNiHao.syllables[1].errors.contains(PronunciationError.tone), isTrue);
+
+      // Test nĩ hào: hào sai thanh 4 so voi thanh 3
+      final resNiHao4 = await scorer.assess(
+        referenceHanzi: '你好',
+        referencePinyin: 'nǐ hǎo',
+        recognizedPinyin: 'nĩ hào',
+      );
+      expect(resNiHao4.syllables[1].errors.contains(PronunciationError.tone), isTrue);
+      expect(resNiHao4.syllables[1].status, SyllableStatus.error);
+
+      // Test nỉ hao: hao thieu dau (thanh 5 so voi thanh 3)
+      final resNiHao5 = await scorer.assess(
+        referenceHanzi: '你好',
+        referencePinyin: 'nǐ hǎo',
+        recognizedPinyin: 'nỉ hao',
+      );
+      expect(resNiHao5.syllables[1].errors.contains(PronunciationError.tone), isTrue);
+      expect(resNiHao5.syllables[1].status, SyllableStatus.error);
+    });
   });
 }

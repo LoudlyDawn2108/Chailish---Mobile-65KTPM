@@ -16,6 +16,9 @@ import 'models/pronunciation.dart';
 /// Đọc mẫu tiếng Trung. Dùng ở: Phát âm (#15), Từ vựng (#19), Flashcard (#20),
 /// Kiểm tra nghe (#32), Trợ lý AI (#9).
 abstract class TtsService {
+  /// Khởi động ngầm dịch vụ TTS (warm-up) để khi người dùng bấm là phát âm tức thì
+  Future<void> initialize();
+
   /// [slow] = tốc độ chậm (0.7x) để người học nghe rõ thanh điệu.
   Future<void> speak(String text, {bool slow = false});
   Future<void> stop();
@@ -32,54 +35,84 @@ final ttsServiceProvider = Provider<TtsService>((ref) {
 class FlutterTtsService implements TtsService {
   final FlutterTts _tts = FlutterTts();
   bool _configured = false;
-  bool _isSpeaking = false;
+  bool _isPlaying = false;
+
+  @override
+  Future<void> initialize() => _ensureInit();
 
   Future<void> _ensureInit() async {
     if (_configured) return;
     try {
+      _tts.setStartHandler(() {
+        _isPlaying = true;
+      });
+      _tts.setCompletionHandler(() {
+        _isPlaying = false;
+      });
+      _tts.setCancelHandler(() {
+        _isPlaying = false;
+      });
+      _tts.setErrorHandler((_) {
+        _isPlaying = false;
+      });
+
       await _tts.setLanguage('zh-CN');
+      await _tts.setPitch(1.0);
+      await _tts.setSpeechRate(0.5);
+
+      // ── Silent warm-up: ép cold-start AudioTrack DAC ở volume 0 ──
+      // Trên Android Emulator (QEMU), lần đầu tiên TTS gọi speak() sẽ tạo
+      // AudioTrack mới → buffer underrun trong audio HAL → tiếng nổ rè 3-5s.
+      // Bằng cách phát 1 ký tự câm (volume 0) ngay lúc khởi tạo, toàn bộ
+      // quá trình cold-start xảy ra khi người dùng chưa nghe → lần speak()
+      // thật sau đó tái sử dụng AudioTrack đã ổn định, phát tức thì không rè.
+      await _tts.setVolume(0.0);
+      await _tts.speak(' ');
+      // Để AudioTrack phát câm TỰ KẾT THÚC, KHÔNG gọi stop() vì ngắt
+      // AudioTrack giữa chừng sẽ tạo xung click trên DAC.
+      // Ký tự trắng phát xong trong ~200ms, chờ thêm 600ms cho QEMU
+      // audio pipeline hoàn toàn flush buffer và ổn định.
+      await Future<void>.delayed(const Duration(milliseconds: 800));
+      // Khôi phục volume từ từ: đợi thêm 100ms sau khi set để DAC ổn định
       await _tts.setVolume(1.0);
-      await _tts.setPitch(1.0); // Giu 1.0 nguyen ban de khong bi meo tieng hoac no DSP
-      await _tts.setSpeechRate(0.45); // Toc do ly tuong giup phat am ro, vang va to hon
-      await _tts.awaitSpeakCompletion(true);
-      try {
-        await _tts.setQueueMode(0); // QUEUE_FLUSH
-      } catch (_) {}
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+
       _configured = true;
+      _isPlaying = false;
     } catch (_) {}
   }
 
   @override
   Future<void> speak(String text, {bool slow = false}) async {
     await _ensureInit();
-    if (_isSpeaking) {
-      try {
-        await _tts.stop();
-        await Future<void>.delayed(const Duration(milliseconds: 60));
-      } catch (_) {}
-    }
-    _isSpeaking = true;
     try {
-      await _tts.setSpeechRate(slow ? 0.30 : 0.45);
-      // Chen dau cham cau tieng Trung 。 de bo tong hop am thanh tu dong ha bien do ve 0 (khong bi giat/no o cuoi)
-      final clean = text.trim();
-      final conditioned = clean.endsWith('。') || clean.endsWith('？') || clean.endsWith('！')
-          ? clean
-          : '$clean。';
-      // Chen khoang trang o dau de khoi tao AudioTrack DAC voi mau 0 truoc khi phat am
-      await _tts.speak(' $conditioned');
+      if (_isPlaying) {
+        await _tts.stop();
+        // Nghỉ 60ms để giải phóng AudioTrack cũ, triệt tiêu tiếng bụp/rè khi đổi từ
+        await Future<void>.delayed(const Duration(milliseconds: 60));
+      }
+      await _tts.setVolume(1.0);
+      await _tts.setPitch(1.0);
+      await _tts.setSpeechRate(slow ? 0.35 : 0.5);
+
+      final clean = text.replaceAll('……', '').trim();
+      if (clean.isNotEmpty) {
+        _isPlaying = true;
+        await _tts.speak(clean);
+      }
     } catch (e) {
       debugPrint('TTS speak error: $e');
-    } finally {
-      _isSpeaking = false;
+      _isPlaying = false;
     }
   }
 
   @override
   Future<void> stop() async {
-    _isSpeaking = false;
     try {
-      await _tts.stop();
+      if (_isPlaying) {
+        await _tts.stop();
+        _isPlaying = false;
+      }
     } catch (_) {}
   }
 }
@@ -108,6 +141,7 @@ final speechRecognizerProvider = Provider<SpeechRecognizer>((ref) {
 class SpeechToTextRecognizer implements SpeechRecognizer {
   final SpeechToText _speech = SpeechToText();
   bool _ready = false;
+  String _cachedLocale = 'zh-CN';
   void Function(String error)? _currentOnError;
 
   @override
@@ -121,6 +155,18 @@ class SpeechToTextRecognizer implements SpeechRecognizer {
         },
         onStatus: (s) => debugPrint('STT status: $s'),
       );
+      if (_ready) {
+        _cachedLocale = 'zh-CN';
+        // Truy vấn danh sách locale bất đồng bộ ở background, không chờ chặn main thread
+        // giúp triệt tiêu độ trễ 2-3s và buffer underrun gây nổ rè trên máy ảo
+        _speech.locales().then((locales) {
+          final zhLocale = locales.firstWhere(
+            (l) => l.localeId.toLowerCase().startsWith('zh') || l.localeId.toLowerCase().startsWith('cmn'),
+            orElse: () => locales.isNotEmpty ? locales.first : LocaleName('zh-CN', 'Chinese'),
+          );
+          _cachedLocale = zhLocale.localeId;
+        }).catchError((_) {});
+      }
     } catch (e) {
       debugPrint('STT initialize exception: $e');
       _ready = false;
@@ -139,31 +185,23 @@ class SpeechToTextRecognizer implements SpeechRecognizer {
       onError?.call('Không thể khởi tạo bộ nhận dạng giọng nói');
       return;
     }
-    String targetLocale = 'zh-CN';
-    try {
-      final locales = await _speech.locales();
-      final zhLocale = locales.firstWhere(
-        (l) => l.localeId.toLowerCase().startsWith('zh') || l.localeId.toLowerCase().startsWith('cmn'),
-        orElse: () => LocaleName('zh-CN', 'Chinese'),
-      );
-      targetLocale = zhLocale.localeId;
-    } catch (_) {}
 
     try {
       await _speech.listen(
         onResult: (SpeechRecognitionResult result) => onResult(result.recognizedWords, result.finalResult),
         onSoundLevelChange: onSoundLevel != null
             ? (level) {
-                // Bien do tra ve thuong tu -2 dB den 10 dB tuy thuoc thiet bi
                 final normalized = level <= 0 ? 0.08 : (level / 10.0).clamp(0.08, 1.0);
                 onSoundLevel(normalized);
               }
             : null,
+        pauseFor: const Duration(seconds: 4),
+        listenFor: const Duration(seconds: 30),
         listenOptions: SpeechListenOptions(
-          localeId: targetLocale,
+          localeId: _cachedLocale,
           partialResults: true,
           cancelOnError: false,
-          listenMode: ListenMode.confirmation,
+          listenMode: ListenMode.dictation,
         ),
       );
     } catch (e) {

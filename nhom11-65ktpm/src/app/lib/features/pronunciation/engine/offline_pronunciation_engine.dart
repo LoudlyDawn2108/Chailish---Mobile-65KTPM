@@ -50,8 +50,11 @@ class OfflinePronunciationEngine implements PronunciationScorer {
         .toList();
     final expSyls = referencePinyin.trim().split(RegExp(r'\s+'));
 
-    // Neu ghi am qua ngan (< 0.4s), nguoi dung chua noi hoac chi cham nhe vao mic
-    if (recording != null && recording.duration.inMilliseconds < 400) {
+    final hasText = (recognizedText != null && recognizedText.trim().isNotEmpty) ||
+        (recognizedPinyin != null && recognizedPinyin.trim().isNotEmpty);
+
+    // Chi coi la bam nham neu ghi am duoi 300ms VA khong he nhan dien duoc chu nao
+    if (recording != null && recording.duration.inMilliseconds < 300 && !hasText) {
       return PronunciationResult(
         overall: 0.0,
         accuracy: 0.0,
@@ -74,8 +77,8 @@ class OfflinePronunciationEngine implements PronunciationScorer {
       );
     }
 
-    // Neu co ban ghi that ma khong nhan dien duoc am tiet nao (im lang hoac noi tieng khac)
-    if (recording != null && (recognizedPinyin == null || recognizedPinyin.trim().isEmpty)) {
+    // Neu ghi am that ma hoan toan im lang, khong bat duoc chu nao
+    if (recording != null && !hasText) {
       return PronunciationResult(
         overall: 0.0,
         accuracy: 0.0,
@@ -98,9 +101,20 @@ class OfflinePronunciationEngine implements PronunciationScorer {
       );
     }
 
-    final actSyls = (recognizedPinyin != null && recognizedPinyin.trim().isNotEmpty)
+    var actSyls = (recognizedPinyin != null && recognizedPinyin.trim().isNotEmpty)
         ? recognizedPinyin.trim().split(RegExp(r'\s+'))
         : <String>[];
+
+    // Fallback phong thu: Neu recognizedPinyin rong nhung recognizedText co chu Han
+    if (actSyls.isEmpty && recognizedText != null && recognizedText.trim().isNotEmpty) {
+      final actChars = recognizedText.runes
+          .map(String.fromCharCode)
+          .where((c) => RegExp(r'[一-鿿]').hasMatch(c))
+          .toList();
+      if (actChars.isNotEmpty) {
+        actSyls = [for (var i = 0; i < actChars.length; i++) i < expSyls.length ? expSyls[i] : ''];
+      }
+    }
 
     final syllablesScore = <SyllableScore>[];
     double totalScore = 0.0;
@@ -158,11 +172,7 @@ class OfflinePronunciationEngine implements PronunciationScorer {
 
       if (expected.tone != actual.tone) {
         errors.add(PronunciationError.tone);
-        if ((expected.tone == 2 && actual.tone == 3) || (expected.tone == 3 && actual.tone == 2)) {
-          tonePen = 15.0;
-        } else {
-          tonePen = 35.0;
-        }
+        tonePen = 45.0;
       }
 
       double score;
@@ -170,19 +180,22 @@ class OfflinePronunciationEngine implements PronunciationScorer {
       double toneSc;
       SyllableStatus status;
 
-      // Neu ca thanh mau va van mau deu sai hoan toan (khong he phat am dung am tiet nay)
       if (initialPen >= 40.0 && finalPen >= 40.0) {
         score = 0.0;
         acc = 0.0;
         toneSc = 0.0;
         status = SyllableStatus.error;
       } else {
-        final wordPenalty = initialPen * 0.45 + finalPen * 0.45 + tonePen * 0.30;
+        final wordPenalty = initialPen * 0.40 + finalPen * 0.40 + tonePen * 0.50;
         score = max(0.0, 100.0 - wordPenalty);
         acc = max(0.0, 100.0 - (initialPen + finalPen));
         toneSc = max(0.0, 100.0 - tonePen * 2.0);
 
-        if (score < 60) {
+        if (errors.contains(PronunciationError.initial) && errors.contains(PronunciationError.tone)) {
+          status = SyllableStatus.error;
+        } else if (errors.contains(PronunciationError.tone)) {
+          status = tonePen >= 40.0 ? SyllableStatus.error : SyllableStatus.warn;
+        } else if (score < 60) {
           status = SyllableStatus.error;
         } else if (score < 80) {
           status = SyllableStatus.warn;
