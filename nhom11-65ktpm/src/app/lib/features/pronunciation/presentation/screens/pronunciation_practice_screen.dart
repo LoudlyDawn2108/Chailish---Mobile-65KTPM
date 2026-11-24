@@ -345,15 +345,22 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
           Center(
             child: Padding(
               padding: const EdgeInsets.only(right: 16.0),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: ShapeDecoration(
-                  color: (mode == ScoringMode.preferOnline ? AppColors.infoBlue : AppColors.warningOrange).withValues(alpha: 0.2),
-                  shape: const StadiumBorder(),
-                ),
-                child: Text(
-                  mode == ScoringMode.preferOnline ? 'Online (Azure)' : 'Offline',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              child: GestureDetector(
+                onTap: () {
+                  ref.read(scoringModeProvider.notifier).set(
+                    mode == ScoringMode.preferOnline ? ScoringMode.offlineOnly : ScoringMode.preferOnline,
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: ShapeDecoration(
+                    color: (mode == ScoringMode.preferOnline ? AppColors.infoBlue : AppColors.warningOrange).withValues(alpha: 0.2),
+                    shape: const StadiumBorder(),
+                  ),
+                  child: Text(
+                    mode == ScoringMode.preferOnline ? 'Online (Azure)' : 'Offline',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
             ),
