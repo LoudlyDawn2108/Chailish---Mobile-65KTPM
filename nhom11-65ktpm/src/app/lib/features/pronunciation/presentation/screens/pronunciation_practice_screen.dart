@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -46,6 +48,7 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
   DateTime? _recordingStartedAt;
   Timer? _silenceTimer;
   Timer? _speechSilenceTimer;
+  StreamSubscription<double>? _ampSub;
   bool _voiceDetected = false;
 
   late int _currentWordIndex;
@@ -87,8 +90,11 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
     _silenceTimer = null;
     _speechSilenceTimer?.cancel();
     _speechSilenceTimer = null;
+    _ampSub?.cancel();
+    _ampSub = null;
     if (_isRecording) {
       ref.read(speechRecognizerProvider).stop();
+      ref.read(realVoiceRecorderProvider).cancel();
     }
     if (_isPlayingTts) {
       ref.read(ttsServiceProvider).stop();
@@ -110,8 +116,11 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
     _silenceTimer = null;
     _speechSilenceTimer?.cancel();
     _speechSilenceTimer = null;
+    _ampSub?.cancel();
+    _ampSub = null;
     if (_isRecording) {
       ref.read(speechRecognizerProvider).stop();
+      ref.read(realVoiceRecorderProvider).cancel();
     }
     if (_isPlayingTts) {
       ref.read(ttsServiceProvider).stop();
@@ -132,8 +141,12 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
   void dispose() {
     _silenceTimer?.cancel();
     _speechSilenceTimer?.cancel();
+    _ampSub?.cancel();
     try {
       ref.read(speechRecognizerProvider).stop();
+    } catch (_) {}
+    try {
+      ref.read(realVoiceRecorderProvider).cancel();
     } catch (_) {}
     try {
       ref.read(ttsServiceProvider).stop();
@@ -167,6 +180,7 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
 
   Future<void> _stopAndAssess({
     required SpeechRecognizer speechRecognizer,
+    required VoiceRecorder voiceRecorder,
     required PinyinService pinyinService,
     required PronunciationScorer scorer,
   }) async {
@@ -174,12 +188,20 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
     _silenceTimer = null;
     _speechSilenceTimer?.cancel();
     _speechSilenceTimer = null;
+    _ampSub?.cancel();
+    _ampSub = null;
     if (!_isRecording && !_isAssessing) return;
 
     setState(() {
       _isRecording = false;
       _isAssessing = true;
     });
+
+    Recording? realRecording;
+    try {
+      realRecording = await voiceRecorder.stop();
+    } catch (_) {}
+
     try {
       await speechRecognizer.stop();
       // Đợi một khoảng ngắn (350ms) để STT xử lý và hoàn tất phát sự kiện onResult cuối cùng
@@ -188,9 +210,9 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
 
     final duration = _recordingStartedAt != null
         ? DateTime.now().difference(_recordingStartedAt!)
-        : Duration.zero;
+        : (realRecording?.duration ?? Duration.zero);
     _recordingStartedAt = null;
-    final recording = Recording(path: null, duration: duration);
+    final recording = realRecording ?? Recording(path: null, duration: duration);
 
     // Nếu bấm dừng ngay khi vừa dứt lời, đợi thêm 250ms nếu micro từng phát hiện có tiếng nói
     if (_recognizedWords.trim().isEmpty && _voiceDetected) {
@@ -220,6 +242,17 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
       recognizedPinyin: recognizedPinyin.isNotEmpty ? recognizedPinyin : null,
       recognizedText: recognizedText.isNotEmpty ? recognizedText : null,
     );
+
+    // Xoá file âm thanh tạm sau khi đã gửi đi chấm
+    if (recording.path != null) {
+      try {
+        final f = File(recording.path!);
+        if (await f.exists()) {
+          await f.delete();
+        }
+      } catch (_) {}
+    }
+
     if (mounted) {
       setState(() {
         _result = res;
@@ -301,6 +334,7 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
     final tts = ref.watch(ttsServiceProvider);
     final scorer = ref.watch(hybridPronunciationScorerProvider);
     final speechRecognizer = ref.watch(speechRecognizerProvider);
+    final voiceRecorder = ref.watch(realVoiceRecorderProvider);
     final pinyinService = ref.watch(cedictPinyinServiceProvider);
     final mode = ref.watch(scoringModeProvider);
 
@@ -330,6 +364,29 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
         padding: const EdgeInsets.only(top: 104, left: 20, right: 20, bottom: 32),
         child: Column(
           children: [
+            if (mode == ScoringMode.offlineOnly)
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.warningOrange.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.warningOrange.withValues(alpha: 0.3)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.info_outline, size: 18, color: AppColors.warningOrange),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Chế độ Offline: Kiểm tra đúng/sai chữ Hán. Chuyển sang Online (Azure) để chấm chi tiết thanh điệu & âm phổ.',
+                        style: TextStyle(fontSize: 12, color: AppColors.cloud),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
             GlassCard(
               padding: const EdgeInsets.all(24.0),
               child: Column(
@@ -517,6 +574,7 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
                       if (_isRecording) {
                         await _stopAndAssess(
                           speechRecognizer: speechRecognizer,
+                          voiceRecorder: voiceRecorder,
                           pinyinService: pinyinService,
                           scorer: scorer,
                         );
@@ -538,10 +596,29 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
                         _startSilenceTimer(
                           onTimeout: () => _stopAndAssess(
                             speechRecognizer: speechRecognizer,
+                            voiceRecorder: voiceRecorder,
                             pinyinService: pinyinService,
                             scorer: scorer,
                           ),
                         );
+
+                        // Bat dau ghi am WAV qua RealVoiceRecorder (cho ket qua online Azure #14)
+                        try {
+                          await voiceRecorder.start();
+                          _ampSub?.cancel();
+                          _ampSub = voiceRecorder.amplitude.listen((amp) {
+                            if (mounted) {
+                              setState(() {
+                                _currentAmplitude = amp;
+                                if (amp > _maxAmplitudeObserved) {
+                                  _maxAmplitudeObserved = amp;
+                                }
+                              });
+                            }
+                          });
+                        } catch (e) {
+                          debugPrint('RealVoiceRecorder start error: $e');
+                        }
 
                         try {
                           await speechRecognizer.listen(
@@ -557,6 +634,7 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
                                   if (mounted && _isRecording) {
                                     _stopAndAssess(
                                       speechRecognizer: speechRecognizer,
+                                      voiceRecorder: voiceRecorder,
                                       pinyinService: pinyinService,
                                       scorer: scorer,
                                     );
@@ -579,6 +657,7 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
                                     if (mounted && _isRecording) {
                                       _stopAndAssess(
                                         speechRecognizer: speechRecognizer,
+                                        voiceRecorder: voiceRecorder,
                                         pinyinService: pinyinService,
                                         scorer: scorer,
                                       );
@@ -624,9 +703,9 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
               style: const TextStyle(color: AppColors.cloud, fontSize: 13),
             ),
 
-            if (!_isRecording && !_isAssessing) ...[
+            if (kDebugMode && !_isRecording && !_isAssessing) ...[
               const SizedBox(height: 14),
-              const Text('Kiểm tra nhanh bắt lỗi dấu Pinyin:', style: TextStyle(color: AppColors.cloud, fontSize: 12)),
+              const Text('Kiểm tra nhanh bắt lỗi dấu Pinyin (Debug):', style: TextStyle(color: AppColors.cloud, fontSize: 12)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -696,7 +775,7 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
                   children: [
                     const Text('Kết Quả Đánh Giá Chi Tiết', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     Text(
-                      'Nguồn: ${res.source == ScoringSource.online ? "Azure Speech" : "Engine Offline (AI)"}',
+                      'Nguồn: ${res.source == ScoringSource.online ? "Azure Speech (Online)" : "Engine Offline (Kiểm tra đúng/sai chữ)"}',
                       style: const TextStyle(color: AppColors.cloud, fontSize: 12),
                     ),
                   ],

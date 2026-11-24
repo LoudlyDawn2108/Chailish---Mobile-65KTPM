@@ -116,6 +116,21 @@ class OfflinePronunciationEngine implements PronunciationScorer {
       }
     }
 
+    final expPartsList = <SyllableParts>[];
+    for (var i = 0; i < chars.length; i++) {
+      final expPinyinStr = i < expSyls.length ? expSyls[i] : '';
+      expPartsList.add(splitPinyin(expPinyinStr));
+    }
+
+    final bool isMockDefault = (recording == null && actSyls.isEmpty);
+    final actPartsList = isMockDefault
+        ? expPartsList
+        : actSyls.map((s) => splitPinyin(s)).toList();
+
+    final alignedActList = isMockDefault
+        ? expPartsList.map((e) => e as SyllableParts?).toList()
+        : _alignSyllables(expPartsList, actPartsList);
+
     final syllablesScore = <SyllableScore>[];
     double totalScore = 0.0;
     double totalAccuracy = 0.0;
@@ -124,15 +139,14 @@ class OfflinePronunciationEngine implements PronunciationScorer {
 
     for (var i = 0; i < chars.length; i++) {
       final hanzi = chars[i];
-      final expPinyinStr = i < expSyls.length ? expSyls[i] : '';
-      final expected = splitPinyin(expPinyinStr);
+      final expected = expPartsList[i];
 
       if (expected.initial.isEmpty && expected.finalPart.isEmpty) {
         continue;
       }
 
-      final bool isMockDefault = (recording == null && actSyls.isEmpty);
-      if (!isMockDefault && i >= actSyls.length) {
+      final SyllableParts? actual = alignedActList[i];
+      if (actual == null) {
         syllablesScore.add(SyllableScore(
           hanzi: hanzi,
           expected: expected,
@@ -144,7 +158,6 @@ class OfflinePronunciationEngine implements PronunciationScorer {
         continue;
       }
 
-      final SyllableParts actual = isMockDefault ? expected : splitPinyin(actSyls[i]);
       recognizedCount++;
 
       final errors = <PronunciationError>[];
@@ -247,5 +260,65 @@ class OfflinePronunciationEngine implements PronunciationScorer {
       recognizedText: recognizedText ?? (actSyls.isNotEmpty ? actSyls.join(' ') : referenceHanzi),
       syllables: syllablesScore,
     );
+  }
+
+  /// Căn chỉnh âm tiết mong đợi (expected) và âm tiết đọc được (actual).
+  /// Giải quyết trường hợp đọc thiếu âm tiết ở đầu (ví dụ đọc "hǎo" thay vì "nǐ hǎo"),
+  /// không làm lệch toàn bộ các âm tiết phía sau.
+  List<SyllableParts?> _alignSyllables(List<SyllableParts> expList, List<SyllableParts> actList) {
+    if (actList.isEmpty) {
+      return List<SyllableParts?>.filled(expList.length, null);
+    }
+
+    final n = expList.length;
+    final m = actList.length;
+
+    int matchScore(SyllableParts e, SyllableParts a) {
+      if (e.initial == a.initial && e.finalPart == a.finalPart && e.tone == a.tone) {
+        return 10;
+      }
+      if (e.initial == a.initial && e.finalPart == a.finalPart) {
+        return 8;
+      }
+      if (e.finalPart == a.finalPart) {
+        return 4;
+      }
+      if (e.initial == a.initial) {
+        return 3;
+      }
+      return -2;
+    }
+
+    final dp = List.generate(n + 1, (_) => List<int>.filled(m + 1, 0));
+
+    for (var i = 1; i <= n; i++) {
+      for (var j = 1; j <= m; j++) {
+        final score = matchScore(expList[i - 1], actList[j - 1]);
+        dp[i][j] = max(
+          dp[i - 1][j - 1] + score,
+          max(dp[i - 1][j], dp[i][j - 1]),
+        );
+      }
+    }
+
+    final aligned = List<SyllableParts?>.filled(n, null);
+    var i = n;
+    var j = m;
+
+    while (i > 0 && j > 0) {
+      final score = matchScore(expList[i - 1], actList[j - 1]);
+      if (dp[i][j] == dp[i - 1][j - 1] + score && score > 0) {
+        aligned[i - 1] = actList[j - 1];
+        i--;
+        j--;
+      } else if (dp[i][j] == dp[i - 1][j]) {
+        aligned[i - 1] = null;
+        i--;
+      } else {
+        j--;
+      }
+    }
+
+    return aligned;
   }
 }

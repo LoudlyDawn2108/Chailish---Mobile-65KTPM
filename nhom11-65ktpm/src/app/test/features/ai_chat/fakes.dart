@@ -106,6 +106,9 @@ class FakeTts implements ChatTts {
   final spoken = <(String, bool)>[];
 
   @override
+  Future<void> initialize() async {}
+
+  @override
   Future<void> speak(String text, {bool slow = false}) async => spoken.add((text, slow));
 
   @override

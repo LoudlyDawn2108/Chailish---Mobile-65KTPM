@@ -17,7 +17,7 @@ import 'models/pronunciation.dart';
 /// Kiểm tra nghe (#32), Trợ lý AI (#9).
 abstract class TtsService {
   /// Khởi động ngầm dịch vụ TTS (warm-up) để khi người dùng bấm là phát âm tức thì
-  Future<void> initialize();
+  Future<void> initialize() async {}
 
   /// [slow] = tốc độ chậm (0.7x) để người học nghe rõ thanh điệu.
   Future<void> speak(String text, {bool slow = false});
@@ -38,9 +38,12 @@ class FlutterTtsService implements TtsService {
   bool _isPlaying = false;
 
   @override
-  Future<void> initialize() => _ensureInit();
+  Future<void> initialize() async {
+    await _ensureConfigured();
+    await _performSilentWarmup();
+  }
 
-  Future<void> _ensureInit() async {
+  Future<void> _ensureConfigured() async {
     if (_configured) return;
     try {
       _tts.setStartHandler(() {
@@ -57,34 +60,30 @@ class FlutterTtsService implements TtsService {
       });
 
       await _tts.setLanguage('zh-CN');
+      await _tts.setVolume(1.0);
       await _tts.setPitch(1.0);
       await _tts.setSpeechRate(0.5);
+      _configured = true;
+    } catch (_) {}
+  }
 
+  Future<void> _performSilentWarmup() async {
+    try {
       // ── Silent warm-up: ép cold-start AudioTrack DAC ở volume 0 ──
-      // Trên Android Emulator (QEMU), lần đầu tiên TTS gọi speak() sẽ tạo
-      // AudioTrack mới → buffer underrun trong audio HAL → tiếng nổ rè 3-5s.
-      // Bằng cách phát 1 ký tự câm (volume 0) ngay lúc khởi tạo, toàn bộ
-      // quá trình cold-start xảy ra khi người dùng chưa nghe → lần speak()
-      // thật sau đó tái sử dụng AudioTrack đã ổn định, phát tức thì không rè.
+      // Chỉ chạy khi màn hình gọi initialize() chủ động, không chạy trong speak()
+      // để máy thật hoặc các màn khác không bị trễ.
       await _tts.setVolume(0.0);
       await _tts.speak(' ');
-      // Để AudioTrack phát câm TỰ KẾT THÚC, KHÔNG gọi stop() vì ngắt
-      // AudioTrack giữa chừng sẽ tạo xung click trên DAC.
-      // Ký tự trắng phát xong trong ~200ms, chờ thêm 600ms cho QEMU
-      // audio pipeline hoàn toàn flush buffer và ổn định.
       await Future<void>.delayed(const Duration(milliseconds: 800));
-      // Khôi phục volume từ từ: đợi thêm 100ms sau khi set để DAC ổn định
       await _tts.setVolume(1.0);
       await Future<void>.delayed(const Duration(milliseconds: 100));
-
-      _configured = true;
       _isPlaying = false;
     } catch (_) {}
   }
 
   @override
   Future<void> speak(String text, {bool slow = false}) async {
-    await _ensureInit();
+    await _ensureConfigured();
     try {
       if (_isPlaying) {
         await _tts.stop();
@@ -195,13 +194,13 @@ class SpeechToTextRecognizer implements SpeechRecognizer {
                 onSoundLevel(normalized);
               }
             : null,
-        pauseFor: const Duration(seconds: 4),
-        listenFor: const Duration(seconds: 30),
         listenOptions: SpeechListenOptions(
           localeId: _cachedLocale,
           partialResults: true,
           cancelOnError: false,
           listenMode: ListenMode.dictation,
+          pauseFor: const Duration(seconds: 4),
+          listenFor: const Duration(seconds: 30),
         ),
       );
     } catch (e) {

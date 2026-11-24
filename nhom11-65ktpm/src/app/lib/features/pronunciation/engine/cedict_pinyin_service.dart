@@ -48,6 +48,7 @@ class CedictPinyinService implements PinyinService {
       '我': 'wǒ', '你': 'nǐ', '他': 'tā', '她': 'tā', '我们': 'wǒmen',
       '是': 'shì', '有': 'yǒu', '在': 'zài', '不': 'bù', '没': 'méi',
       '想': 'xiǎng', '能': 'néng', '会': 'huì', '可以': 'kěyǐ', '做': 'zuò',
+      '天': 'tiān', '年': 'nián', '起': 'qǐ', '看': 'kàn', '个': 'gè', '岁': 'suì',
     };
     baseDict.forEach((k, v) {
       dict.putIfAbsent(k, () => v);

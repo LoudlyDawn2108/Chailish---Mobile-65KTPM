@@ -5,16 +5,19 @@ import 'package:http/http.dart' as http;
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/contracts/models/pronunciation.dart';
 import '../../../../core/contracts/pronunciation_scorer.dart';
+import '../../../../core/network/api_client.dart';
 import 'offline_pronunciation_engine.dart';
 
 /// Bo cham ket hop Online Azure va tu dong Fallback Offline. Chu so huu: Khanh (#14)
 class HybridPronunciationScorer implements PronunciationScorer {
   final ScoringMode Function() getScoringMode;
+  final ApiClient? apiClient;
   final String serverBaseUrl;
   final OfflinePronunciationEngine _offlineEngine = OfflinePronunciationEngine();
 
   HybridPronunciationScorer({
     required this.getScoringMode,
+    this.apiClient,
     this.serverBaseUrl = AppConstants.defaultBaseUrl,
   });
 
@@ -60,10 +63,27 @@ class HybridPronunciationScorer implements PronunciationScorer {
     final file = File(audioPath);
     if (!await file.exists()) return null;
 
+    if (apiClient != null) {
+      final res = await apiClient!.postMultipart(
+        '/pronunciation/assess',
+        fields: {
+          'reference_text': referenceHanzi,
+          'reference_pinyin': referencePinyin,
+        },
+        fileField: 'audio_file',
+        filePath: audioPath,
+      );
+      if (res is Map<String, dynamic>) {
+        return PronunciationResult.fromJson(res);
+      }
+      return null;
+    }
+
     final baseUrl = serverBaseUrl.endsWith('/api') ? serverBaseUrl : '$serverBaseUrl/api';
     final uri = Uri.parse('$baseUrl/pronunciation/assess');
     final req = http.MultipartRequest('POST', uri)
       ..fields['reference_text'] = referenceHanzi
+      ..fields['reference_pinyin'] = referencePinyin
       ..files.add(await http.MultipartFile.fromPath('audio_file', audioPath));
 
     final streamed = await req.send().timeout(const Duration(seconds: 10));

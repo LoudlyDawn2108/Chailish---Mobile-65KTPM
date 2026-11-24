@@ -96,13 +96,12 @@ class FakePronunciationScorer with FakeImplementation implements PronunciationSc
 const _initials = ['zh', 'ch', 'sh', 'b', 'p', 'm', 'f', 'd', 't', 'n', 'l', 'g', 'k', 'h', 'j', 'q', 'x', 'r', 'z', 'c', 's', 'y', 'w'];
 const _toneMap = {
   'āēīōūǖ': 1,
-  'áéíóúǘý': 2,
-  'ǎěǐǒǔǚảẻỉỏủỷãẽĩõũỹ': 3,
-  'àèìòùǜạẹịọụỵ': 4,
+  'áéíóúǘ': 2,
+  'ǎěǐǒǔǚ': 3,
+  'àèìòùǜ': 4,
 };
 const _plainMap = {
   'āáǎà': 'a', 'ēéěè': 'e', 'īíǐì': 'i', 'ōóǒò': 'o', 'ūúǔù': 'u', 'ǖǘǚǜ': 'ü',
-  'ảãạ': 'a', 'ẻẽẹ': 'e', 'ỉĩị': 'i', 'ỏõọ': 'o', 'ủũụ': 'u', 'ýỷỹỵ': 'y',
 };
 
 /// Tách một âm tiết pinyin có dấu hoặc số: "hǎo" → (h, ao, 3), "ni2" → (n, i, 2).
