@@ -462,57 +462,75 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
             const SizedBox(height: 20),
 
             if (_isRecording || _recognizedWords.isNotEmpty)
-              Container(
-                width: double.infinity,
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(
-                  color: _recognizedWords.isNotEmpty
-                      ? AppColors.jadeGreen.withValues(alpha: 0.12)
-                      : AppColors.primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
+              GestureDetector(
+                onTap: _isRecording && kDebugMode
+                    ? () {
+                        setState(() {
+                          _recognizedWords = _currentWord.hanzi;
+                          _voiceDetected = true;
+                        });
+                      }
+                    : null,
+                onLongPress: _isRecording && kDebugMode
+                    ? () {
+                        setState(() {
+                          _recognizedWords = '谢谢';
+                          _voiceDetected = true;
+                        });
+                      }
+                    : null,
+                child: Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
                     color: _recognizedWords.isNotEmpty
-                        ? AppColors.jadeGreen
-                        : AppColors.primary.withValues(alpha: 0.3),
-                    width: 1.5,
+                        ? AppColors.jadeGreen.withValues(alpha: 0.12)
+                        : AppColors.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: _recognizedWords.isNotEmpty
+                          ? AppColors.jadeGreen
+                          : AppColors.primary.withValues(alpha: 0.3),
+                      width: 1.5,
+                    ),
                   ),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          _recognizedWords.isNotEmpty ? Icons.record_voice_over : Icons.hearing,
-                          color: _recognizedWords.isNotEmpty ? AppColors.jadeGreen : AppColors.primary,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _recognizedWords.isNotEmpty ? 'ĐÃ NHẬN DIỆN ĐƯỢC' : 'ĐANG LẮNG NGHE GIỌNG BẠN...',
-                          style: TextStyle(
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            _recognizedWords.isNotEmpty ? Icons.record_voice_over : Icons.hearing,
                             color: _recognizedWords.isNotEmpty ? AppColors.jadeGreen : AppColors.primary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                            letterSpacing: 0.5,
+                            size: 20,
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _recognizedWords.isNotEmpty
-                          ? '"$_recognizedWords"'
-                          : 'Hãy đọc to từ: ${_currentWord.hanzi} (${_currentWord.pinyin})',
-                      style: TextStyle(
-                        fontSize: _recognizedWords.isNotEmpty ? 24 : 14,
-                        fontWeight: _recognizedWords.isNotEmpty ? FontWeight.bold : FontWeight.normal,
-                        color: _recognizedWords.isNotEmpty ? AppColors.slate : AppColors.cloud,
+                          const SizedBox(width: 8),
+                          Text(
+                            _recognizedWords.isNotEmpty ? 'ĐÃ NHẬN DIỆN ĐƯỢC' : 'ĐANG LẮNG NGHE GIỌNG BẠN...',
+                            style: TextStyle(
+                              color: _recognizedWords.isNotEmpty ? AppColors.jadeGreen : AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                      Text(
+                        _recognizedWords.isNotEmpty
+                            ? '"$_recognizedWords"'
+                            : 'Hãy đọc to từ: ${_currentWord.hanzi} (${_currentWord.pinyin})',
+                        style: TextStyle(
+                          fontSize: _recognizedWords.isNotEmpty ? 24 : 14,
+                          fontWeight: _recognizedWords.isNotEmpty ? FontWeight.bold : FontWeight.normal,
+                          color: _recognizedWords.isNotEmpty ? AppColors.slate : AppColors.cloud,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
