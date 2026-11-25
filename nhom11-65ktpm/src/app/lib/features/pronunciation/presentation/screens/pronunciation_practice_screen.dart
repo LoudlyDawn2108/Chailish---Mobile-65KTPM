@@ -9,7 +9,6 @@ import '../../../../core/contracts/pronunciation_scorer.dart';
 import '../../../../core/contracts/speech_services.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass.dart';
-import '../../pronunciation_providers.dart';
 
 /// Man hinh luyen phat am va xem phan hoi chi tiet chuan Liquid Glass UI. Chu so huu: Khanh (#15)
 class PronunciationPracticeScreen extends ConsumerStatefulWidget {
@@ -94,7 +93,7 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
     _ampSub = null;
     if (_isRecording) {
       ref.read(speechRecognizerProvider).stop();
-      ref.read(realVoiceRecorderProvider).cancel();
+      ref.read(voiceRecorderProvider).cancel();
     }
     if (_isPlayingTts) {
       ref.read(ttsServiceProvider).stop();
@@ -120,7 +119,7 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
     _ampSub = null;
     if (_isRecording) {
       ref.read(speechRecognizerProvider).stop();
-      ref.read(realVoiceRecorderProvider).cancel();
+      ref.read(voiceRecorderProvider).cancel();
     }
     if (_isPlayingTts) {
       ref.read(ttsServiceProvider).stop();
@@ -146,7 +145,7 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
       ref.read(speechRecognizerProvider).stop();
     } catch (_) {}
     try {
-      ref.read(realVoiceRecorderProvider).cancel();
+      ref.read(voiceRecorderProvider).cancel();
     } catch (_) {}
     try {
       ref.read(ttsServiceProvider).stop();
@@ -332,10 +331,10 @@ class _PronunciationPracticeScreenState extends ConsumerState<PronunciationPract
     }
 
     final tts = ref.watch(ttsServiceProvider);
-    final scorer = ref.watch(hybridPronunciationScorerProvider);
+    final scorer = ref.watch(pronunciationScorerProvider);
     final speechRecognizer = ref.watch(speechRecognizerProvider);
-    final voiceRecorder = ref.watch(realVoiceRecorderProvider);
-    final pinyinService = ref.watch(cedictPinyinServiceProvider);
+    final voiceRecorder = ref.watch(voiceRecorderProvider);
+    final pinyinService = ref.watch(pinyinServiceProvider);
     final mode = ref.watch(scoringModeProvider);
 
     return GlassScaffold(
